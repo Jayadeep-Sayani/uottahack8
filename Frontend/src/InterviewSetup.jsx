@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './InterviewSetup.css';
 
 function InterviewSetup() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     companyName: '',
     jobDescription: ''
@@ -74,8 +76,7 @@ function InterviewSetup() {
       localStorage.setItem('interviewData', JSON.stringify(result.data));
       
       // Navigate to interview page
-      alert('Interview questions generated! Starting interview...');
-      // window.location.href = '/interview'; // Uncomment when ready
+      navigate('/interview');
     } else {
       console.error('Failed to start interview:', result.error);
       alert(`Failed to start interview: ${result.error}`);

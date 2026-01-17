@@ -5,9 +5,21 @@ import sys
 import shutil
 from pathlib import Path
 from dotenv import load_dotenv
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 
 # Load environment variables
 load_dotenv()
+
+# Initialize Sentry for error tracking and performance monitoring
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN"),
+    integrations=[FlaskIntegration()],
+    traces_sample_rate=1.0,  # Capture 100% of transactions for performance monitoring
+    profiles_sample_rate=1.0,  # Profile 100% of sampled transactions
+    environment=os.getenv("ENVIRONMENT", "development"),
+    send_default_pii=True,  # Send PII data like request headers and IP
+)
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
@@ -65,7 +77,8 @@ class InterviewPreparationSystem:
         print("\nGenerating questions...")
         
         # Generate questions using Gemini
-        questions = self.question_generator.generate_questions(company_name, job_description)
+        with sentry_sdk.start_span(op="ai.generate", description="Generate interview questions with Gemini"):
+            questions = self.question_generator.generate_questions(company_name, job_description)
         
         total_questions = (
             len(questions["introduction"]) +
@@ -160,12 +173,13 @@ class InterviewPreparationSystem:
         
         # Generate speech
         self.tts_generator.output_dir = self.output_dir
-        self.tts_generator.generate_speech(
-            question_text,
-            output_filename=filename,
-            stability=0.7,
-            similarity_boost=0.75
-        )
+        with sentry_sdk.start_span(op="ai.tts", description=f"ElevenLabs TTS for question {question_num}"):
+            self.tts_generator.generate_speech(
+                question_text,
+                output_filename=filename,
+                stability=0.7,
+                similarity_boost=0.75
+            )
         print()
         
         return str(output_path)
@@ -213,7 +227,8 @@ class InterviewPreparationSystem:
         # 1. Body Language Analysis
         print("Analyzing body language...")
         try:
-            body_language_results = analyze_body_language(str(video_path))
+            with sentry_sdk.start_span(op="analysis.body_language", description="Analyze body language from video"):
+                body_language_results = analyze_body_language(str(video_path))
             body_language_json = output_dir / f"{base_name}_body_language_analysis.json"
             with open(body_language_json, 'w') as f:
                 json.dump(body_language_results, f, indent=2)
@@ -228,7 +243,8 @@ class InterviewPreparationSystem:
         # 2. Eye Contact Analysis
         print("Analyzing eye contact...")
         try:
-            eye_contact_results = analyze_eye_contact(str(video_path))
+            with sentry_sdk.start_span(op="analysis.eye_contact", description="Analyze eye contact from video"):
+                eye_contact_results = analyze_eye_contact(str(video_path))
             eye_contact_json = output_dir / f"{base_name}_eye_contact_analysis.json"
             with open(eye_contact_json, 'w') as f:
                 json.dump(eye_contact_results, f, indent=2)
@@ -243,7 +259,8 @@ class InterviewPreparationSystem:
         # 3. Speech Confidence Analysis
         print("Analyzing speech confidence...")
         try:
-            speech_results = analyze_speech(str(audio_path))
+            with sentry_sdk.start_span(op="analysis.speech_confidence", description="Analyze speech confidence"):
+                speech_results = analyze_speech(str(audio_path))
             speech_json = output_dir / f"{base_name}_speech_confidence_analysis.json"
             with open(speech_json, 'w') as f:
                 json.dump(speech_results, f, indent=2)
@@ -258,11 +275,12 @@ class InterviewPreparationSystem:
         # 4. Speech Modulation Analysis
         print("Analyzing speech modulation...")
         try:
-            modulation_analyzer = SpeechModulationAnalyzer()
-            # Temporarily set output_dir to save in same location as other analyses
-            original_output_dir = modulation_analyzer.output_dir
-            modulation_analyzer.output_dir = output_dir
-            modulation_results = modulation_analyzer.analyze(str(video_path))
+            with sentry_sdk.start_span(op="analysis.speech_modulation", description="Analyze speech modulation with AssemblyAI"):
+                modulation_analyzer = SpeechModulationAnalyzer()
+                # Temporarily set output_dir to save in same location as other analyses
+                original_output_dir = modulation_analyzer.output_dir
+                modulation_analyzer.output_dir = output_dir
+                modulation_results = modulation_analyzer.analyze(str(video_path))
             # The analyze method saves the file, so we just need to get the path
             modulation_json = output_dir / f"{base_name}_modulation_analysis.json"
             # Restore original output_dir
@@ -436,5 +454,7 @@ if __name__ == '__main__':
         print("WARNING: GEMINI_API_KEY environment variable not set!")
     if not os.getenv("ELEVENLABS_API_KEY"):
         print("WARNING: ELEVENLABS_API_KEY environment variable not set!")
-    
+    if not os.getenv("SENTRY_DSN"):
+        print("WARNING: SENTRY_DSN environment variable not set! Error tracking disabled.")
+
     app.run(debug=True, host='0.0.0.0', port=5000)
