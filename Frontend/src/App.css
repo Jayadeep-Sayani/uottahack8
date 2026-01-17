@@ -565,7 +565,7 @@ nav {
 }
 
 
-.feature-card:hover {
+.feature-card:hover, .step-number:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   border-color: #2563eb;
@@ -637,9 +637,8 @@ nav {
   font-weight: bold;
   color: #2563eb;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  transition: all 0.3s;
 }
-
-
 
 
 .step h4 {
@@ -816,3 +815,4 @@ footer {
     display: none;
   }
 }
+

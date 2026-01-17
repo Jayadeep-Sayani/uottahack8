@@ -1,0 +1,40 @@
+# AssemblyAI for speech analysis
+assemblyai>=0.48.4
+
+# Environment variable management
+python-dotenv==1.0.0
+
+google-generativeai>=0.3.0
+
+# Flask web framework for the main application
+flask>=2.0.0
+flask-cors>=4.0.0
+
+# ElevenLabs SDK for text-to-speech and speech-to-text
+elevenlabs==1.11.0
+
+# Environment variable management
+python-dotenv==1.0.0
+
+# HTTP requests for API calls
+requests==2.32.3
+
+# Video/Audio processing (for extracting audio from MP4 files)
+# Note: Requires ffmpeg to be installed on your system
+# Windows: winget install ffmpeg
+# Or download from: https://ffmpeg.org/download.html
+
+# Optional: For audio playback (if you want to play the generated audio)
+# Uncomment the line below if you need audio playback functionality
+# Note: pygame may require additional build tools on Windows
+# pygame==2.5.2
+
+SpeechRecognition>=3.10.0
+pydub>=0.25.1
+numpy>=1.24.0
+
+# Optional but recommended for MP4 audio extraction:
+# moviepy>=1.0.3
+
+opencv-python>=4.8.0
+mediapipe>=0.10.0

@@ -41,53 +41,50 @@ function InterviewSetup() {
   };
 
   const handleStartInterview = async () => {
-    if (!validateForm()) {
-      return;
-    }
+  if (!validateForm()) {
+    return;
+  }
 
-    // Prepare data to send to backend
-    const interviewData = {
-      companyName: formData.companyName.trim(),
-      jobDescription: formData.jobDescription.trim(),
-      timestamp: new Date().toISOString()
-    };
-
-    console.log('Interview data to be sent to backend:', interviewData);
-
-    try {
-      const response = await fetch('/api/start-interview', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(interviewData)
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Backend response:', result);
-        
-        // Store in localStorage as backup
-        localStorage.setItem('interviewData', JSON.stringify(interviewData));
-        
-        // Navigate to interview page or next step
-        // window.location.href = '/interview'; // Uncomment when ready
-        alert('Interview setup complete! Starting interview...');
-      } else {
-        console.error('Failed to start interview');
-        alert('Failed to start interview. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error starting interview:', error);
-      
-      // Fallback: save to localStorage if backend fails
-      localStorage.setItem('interviewData', JSON.stringify(interviewData));
-      alert('Data saved locally. Starting interview...');
-      
-      // You can still proceed to interview page
-      // window.location.href = '/interview';
-    }
+  // Prepare data to send to backend
+  const interviewData = {
+    companyName: formData.companyName.trim(),
+    jobDescription: formData.jobDescription.trim(),
+    timestamp: new Date().toISOString()
   };
+
+  console.log('Interview data to be sent to backend:', interviewData);
+
+  try {
+    // Call your Flask backend
+    const response = await fetch('http://localhost:5000/api/start-interview', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(interviewData)
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      console.log('Backend response:', result);
+      console.log('Generated questions:', result.data.questions);
+      
+      // Store the questions and data for the interview
+      localStorage.setItem('interviewData', JSON.stringify(result.data));
+      
+      // Navigate to interview page
+      alert('Interview questions generated! Starting interview...');
+      // window.location.href = '/interview'; // Uncomment when ready
+    } else {
+      console.error('Failed to start interview:', result.error);
+      alert(`Failed to start interview: ${result.error}`);
+    }
+  } catch (error) {
+    console.error('Error starting interview:', error);
+    alert('Failed to connect to the server. Please try again.');
+  }
+};
 
   return (
     <div className="setup-container">

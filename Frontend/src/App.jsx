@@ -93,7 +93,7 @@ function LandingPage(){
                   </div>
                 </div>
                 <div className="question-box">
-                  <p>Hello! Thank you for joining this interview. We'll start with some sort questions to get to know you better...</p>
+                  <p>Hello! Thank you for joining this interview. We'll start with some short questions to get to know you better...</p>
                 </div>
                 <div className="controls">
                   <button className="control-btn mute">Mute</button>
