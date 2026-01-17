@@ -1,11 +1,38 @@
 import React from 'react';
 import './App.css'; // Import the CSS file
+import { useState, useEffect } from 'react'; 
+import { BrowserRouter, Route, Routes, Link } from 'react-router-dom';
+import InterviewSetup from './InterviewSetup.jsx'
 
 
-function App() {
+function LoadingPage() {
+  return (
+    <div className="loading-container">
+      <div className="loading-content">
+        <div className="logo-animation">
+          <h1 className="loading-logo">Get-into.tech</h1>
+          <div className="loading-tagline">Ace Your Interview with AI</div>
+        </div>
+        
+        <div className="loader">
+          <div className="loader-bar"></div>
+        </div>
+        
+        <div className="loading-text">Preparing your experience...</div>
+      </div>
+      
+      <div className="loading-background">
+        <div className="circle circle-1"></div>
+        <div className="circle circle-2"></div>
+        <div className="circle circle-3"></div>
+      </div>
+    </div>
+  );
+}
+
+function LandingPage(){
   return (
     <div className="App">
-      {/* Navigation */}
       <nav>
         <div className="nav-container">
           <div className="logo">Get-into.tech</div>
@@ -19,7 +46,6 @@ function App() {
         </div>
       </nav>
 
-
       <section className="hero">
         <div className="hero-container">
           <div className="hero-content">
@@ -31,7 +57,7 @@ function App() {
             <div className="promo-badge">
               🎉 Try 3 AI Interview sessions for FREE! 🎉
             </div>
-            <button className="cta-btn">Practice Interview</button>
+            <Link to="/Job-Info" className="cta-btn">Practice Interview</Link>
            
             <div className="trust-section">
               <p>Trusted by Students and Professionals from</p>
@@ -79,10 +105,7 @@ function App() {
             </div>
           </div>
         </div>
-      </section>
-
-
- 
+      </section> 
       <section className="features" id="features">
         <h2>Why Choose Get-into.tech?</h2>
        
@@ -95,8 +118,6 @@ function App() {
               industry-specific questions
             </p>
           </div>
-
-
           <div className="feature-card">
             <div className="feature-icon">💡</div>
             <h3>Instant Feedback</h3>
@@ -105,8 +126,6 @@ function App() {
               communication skills
             </p>
           </div>
-
-
           <div className="feature-card">
             <div className="feature-icon">📈</div>
             <h3>Personalized Experience</h3>
@@ -118,8 +137,6 @@ function App() {
         </div>
       </section>
 
-
-      {/* How It Works Section */}
       <section className="how-it-works">
         <h2>How It Works</h2>
        
@@ -129,27 +146,17 @@ function App() {
             <h4>Choose Role</h4>
             <p>Select your target position</p>
           </div>
-
-
-
-
           <div className="step">
             <div className="step-number">2</div>
             <h4>Practice</h4>
             <p>Answer AI questions</p>
           </div>
 
-
-
-
           <div className="step">
             <div className="step-number">3</div>
             <h4>Get Feedback</h4>
             <p>Receive detailed insights</p>
           </div>
-
-
-
 
           <div className="step">
             <div className="step-number">4</div>
@@ -167,18 +174,40 @@ function App() {
           <div className="testimonial-author">- Jason Ye, Software Engineer</div>
         </div>
       </section>
-     
       <section className="final-cta">
         <h2>Ready to Ace Your Interview?</h2>
         <p>Join thousands of candidates who've landed their dream jobs</p>
         <button className="btn-large">Get Started for Free</button>
       </section>
-
-
       <footer>
         <p>© 2026 Get-into.tech. All rights reserved.</p>
       </footer>
     </div>
+  )
+}
+
+function App() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <LoadingPage />;
+  }
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/Job-Info" element={<InterviewSetup />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
