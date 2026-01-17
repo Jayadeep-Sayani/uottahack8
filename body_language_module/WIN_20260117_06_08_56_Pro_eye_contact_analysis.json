@@ -1,0 +1,14 @@
+{
+  "status": "Analysis Complete",
+  "overall_score": 0.587,
+  "assessment": "FAIR",
+  "interpretation": "Fair eye contact - occasional looking away or unnatural eye opening",
+  "details": {
+    "eye_contact_score": 0.888,
+    "eye_opening_score": 0.138,
+    "frames_analyzed": 96
+  },
+  "recommendations": [
+    "Adjust eye opening - keep eyes naturally open, not too closed or wide"
+  ]
+}
