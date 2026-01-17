@@ -3,6 +3,7 @@ import './App.css'; // Import the CSS file
 import { useState, useEffect } from 'react'; 
 import { BrowserRouter, Route, Routes, Link } from 'react-router-dom';
 import InterviewSetup from './InterviewSetup.jsx'
+import InterviewPage from './InterviewPage.jsx' 
 
 
 function LoadingPage() {
@@ -206,6 +207,7 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/Job-Info" element={<InterviewSetup />} />
+        <Route path="/Interview-page" element={<InterviewPage/>} /> 
       </Routes>
     </BrowserRouter>
   );

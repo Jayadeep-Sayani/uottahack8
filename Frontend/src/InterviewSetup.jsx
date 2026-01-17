@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom'; 
 import './InterviewSetup.css';
 
 function InterviewSetup() {
@@ -84,6 +85,7 @@ function InterviewSetup() {
     console.error('Error starting interview:', error);
     alert('Failed to connect to the server. Please try again.');
   }
+  
 };
 
   return (
@@ -142,12 +144,12 @@ function InterviewSetup() {
             </div>
           </div>
 
-          <button 
+          <Link to="/Interview-page"
             className="start-btn"
             onClick={handleStartInterview}
           >
             Start Interview
-          </button>
+          </Link>
         </div>
 
         <div className="features-preview">
