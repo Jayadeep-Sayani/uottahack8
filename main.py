@@ -4,6 +4,7 @@ Main module that generates interview questions using Gemini and converts them to
 
 import os
 import sys
+import shutil
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -29,6 +30,12 @@ class InterviewPreparationSystem:
         self.tts_generator = TextToSpeech()
         self.output_dir = Path(__file__).parent / "interview_output"
         self.output_dir.mkdir(exist_ok=True)
+        
+        # Create or clear user_recordings directory
+        self.user_recordings_dir = Path(__file__).parent / "user_recordings"
+        if self.user_recordings_dir.exists():
+            shutil.rmtree(self.user_recordings_dir)
+        self.user_recordings_dir.mkdir(exist_ok=True)
     
     def generate_and_convert_questions(self, company_name: str, job_description: str):
         """
