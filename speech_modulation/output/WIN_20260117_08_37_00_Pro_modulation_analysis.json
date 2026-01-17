@@ -1,0 +1,42 @@
+{
+    "summary": {
+        "speech_rate_wpm": 57.39,
+        "total_filler_words": 2,
+        "significant_pauses": 3,
+        "primary_sentiment": "positive",
+        "confidence_avg": 1.0
+    },
+    "sentiment_details": {
+        "positive": 3,
+        "neutral": 1,
+        "negative": 0
+    },
+    "fillers": [
+        {
+            "word": "um,",
+            "timestamp_ms": 6500
+        },
+        {
+            "word": "m",
+            "timestamp_ms": 19100
+        }
+    ],
+    "pauses": [
+        {
+            "after_word": "I",
+            "duration_sec": 1.2,
+            "timestamp_ms": 3200
+        },
+        {
+            "after_word": "best",
+            "duration_sec": 1.84,
+            "timestamp_ms": 7680
+        },
+        {
+            "after_word": "everything.",
+            "duration_sec": 6.8,
+            "timestamp_ms": 10800
+        }
+    ],
+    "transcript": "I love myself. I am, um, the best I can do everything. I'm the m Greatest of all time. I'm the goat."
+}

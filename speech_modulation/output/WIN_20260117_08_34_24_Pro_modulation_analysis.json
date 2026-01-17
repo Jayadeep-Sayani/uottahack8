@@ -1,0 +1,37 @@
+{
+    "summary": {
+        "speech_rate_wpm": 60.0,
+        "total_filler_words": 2,
+        "significant_pauses": 2,
+        "primary_sentiment": "negative",
+        "confidence_avg": 0.98
+    },
+    "sentiment_details": {
+        "positive": 0,
+        "neutral": 1,
+        "negative": 4
+    },
+    "fillers": [
+        {
+            "word": "M",
+            "timestamp_ms": 3900
+        },
+        {
+            "word": "uh,",
+            "timestamp_ms": 5240
+        }
+    ],
+    "pauses": [
+        {
+            "after_word": "enough.",
+            "duration_sec": 2.0,
+            "timestamp_ms": 11040
+        },
+        {
+            "after_word": "confidence.",
+            "duration_sec": 2.0,
+            "timestamp_ms": 16000
+        }
+    ],
+    "transcript": "I think I am. M not a, uh, good fit for this role. I am not good enough. I lack confidence. I have so many drawbacks."
+}

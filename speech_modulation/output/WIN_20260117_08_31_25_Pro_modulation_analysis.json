@@ -1,0 +1,38 @@
+{
+    "summary": {
+        "speech_rate_wpm": 60.0,
+        "total_filler_words": 1,
+        "significant_pauses": 3,
+        "primary_sentiment": "neutral",
+        "confidence_avg": 0.95
+    },
+    "sentiment_details": {
+        "positive": 1,
+        "neutral": 2,
+        "negative": 0
+    },
+    "fillers": [
+        {
+            "word": "Mhm.",
+            "timestamp_ms": 1180
+        }
+    ],
+    "pauses": [
+        {
+            "after_word": "instead,",
+            "duration_sec": 2.24,
+            "timestamp_ms": 7520
+        },
+        {
+            "after_word": "root,",
+            "duration_sec": 1.04,
+            "timestamp_ms": 20000
+        },
+        {
+            "after_word": "control,",
+            "duration_sec": 1.28,
+            "timestamp_ms": 23440
+        }
+    ],
+    "transcript": "Mhm. If you want full transparency instead, you must know training data and features end to end. Your only options are open source, root, open smile, full control, full explainability."
+}

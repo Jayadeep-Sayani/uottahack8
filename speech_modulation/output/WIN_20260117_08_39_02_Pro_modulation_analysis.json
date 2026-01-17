@@ -1,0 +1,17 @@
+{
+    "summary": {
+        "speech_rate_wpm": 2.86,
+        "total_filler_words": 0,
+        "significant_pauses": 0,
+        "primary_sentiment": "neutral",
+        "confidence_avg": 0.8
+    },
+    "sentiment_details": {
+        "positive": 0,
+        "neutral": 1,
+        "negative": 0
+    },
+    "fillers": [],
+    "pauses": [],
+    "transcript": "I."
+}

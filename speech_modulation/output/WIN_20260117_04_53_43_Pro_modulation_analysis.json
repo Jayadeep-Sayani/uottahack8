@@ -1,0 +1,57 @@
+{
+    "summary": {
+        "speech_rate_wpm": 76.96,
+        "total_filler_words": 2,
+        "significant_pauses": 6,
+        "primary_sentiment": "neutral",
+        "confidence_avg": 0.97
+    },
+    "sentiment_details": {
+        "positive": 2,
+        "neutral": 11,
+        "negative": 1
+    },
+    "fillers": [
+        {
+            "word": "uh.",
+            "timestamp_ms": 9660
+        },
+        {
+            "word": "M.",
+            "timestamp_ms": 15920
+        }
+    ],
+    "pauses": [
+        {
+            "after_word": "me?",
+            "duration_sec": 1.28,
+            "timestamp_ms": 4160
+        },
+        {
+            "after_word": "mean,",
+            "duration_sec": 1.98,
+            "timestamp_ms": 7680
+        },
+        {
+            "after_word": "uh.",
+            "duration_sec": 5.98,
+            "timestamp_ms": 9940
+        },
+        {
+            "after_word": "M.",
+            "duration_sec": 1.74,
+            "timestamp_ms": 15940
+        },
+        {
+            "after_word": "Yeah.",
+            "duration_sec": 2.56,
+            "timestamp_ms": 18240
+        },
+        {
+            "after_word": "Hahaha.",
+            "duration_sec": 8.89,
+            "timestamp_ms": 26320
+        }
+    ],
+    "transcript": "Hello. Hi. Can you see me? I hope you can. I mean, uh. M. Yeah. I don't know if it'll detect my laughing. No, that would be crazy. Okay. Hahaha. Oh, you know, it's like the subtitles that they have in the tv, it's like. Clears throat and then some background music or something. Okay, that's it. 45 seconds."
+}

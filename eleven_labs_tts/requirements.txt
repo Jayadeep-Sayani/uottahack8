@@ -1,8 +1,16 @@
-# ElevenLabs SDK for text-to-speech
+# ElevenLabs SDK for text-to-speech and speech-to-text
 elevenlabs==1.11.0
 
 # Environment variable management
 python-dotenv==1.0.0
+
+# HTTP requests for API calls
+requests==2.32.3
+
+# Video/Audio processing (for extracting audio from MP4 files)
+# Note: Requires ffmpeg to be installed on your system
+# Windows: winget install ffmpeg
+# Or download from: https://ffmpeg.org/download.html
 
 # Optional: For audio playback (if you want to play the generated audio)
 # Uncomment the line below if you need audio playback functionality
