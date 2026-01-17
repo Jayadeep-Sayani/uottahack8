@@ -1,0 +1,48 @@
+{
+    "summary": {
+        "speech_rate_wpm": 55.71,
+        "total_filler_words": 1,
+        "significant_pauses": 5,
+        "primary_sentiment": "neutral",
+        "confidence_avg": 0.98
+    },
+    "sentiment_details": {
+        "positive": 0,
+        "neutral": 3,
+        "negative": 0
+    },
+    "fillers": [
+        {
+            "word": "Uh,",
+            "timestamp_ms": 1900
+        }
+    ],
+    "pauses": [
+        {
+            "after_word": "Yatri,",
+            "duration_sec": 1.12,
+            "timestamp_ms": 5600
+        },
+        {
+            "after_word": "and",
+            "duration_sec": 1.52,
+            "timestamp_ms": 7120
+        },
+        {
+            "after_word": "University.",
+            "duration_sec": 2.88,
+            "timestamp_ms": 13440
+        },
+        {
+            "after_word": "tmu,",
+            "duration_sec": 1.12,
+            "timestamp_ms": 19120
+        },
+        {
+            "after_word": "think.",
+            "duration_sec": 1.76,
+            "timestamp_ms": 20800
+        }
+    ],
+    "transcript": "Uh, hi, my name is Yatri, and I study at Toronto Metropolitan University. It's also called tmu, I think. I'm not sure actually what it's called."
+}

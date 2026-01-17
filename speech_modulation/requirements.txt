@@ -1,0 +1,8 @@
+# AssemblyAI for speech analysis
+assemblyai>=0.48.4
+
+# Environment variable management
+python-dotenv==1.0.0
+
+
+

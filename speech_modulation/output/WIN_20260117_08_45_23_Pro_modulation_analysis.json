@@ -1,0 +1,51 @@
+{
+    "summary": {
+        "speech_rate_wpm": 12.24,
+        "total_filler_words": 2,
+        "significant_pauses": 5,
+        "primary_sentiment": "neutral"
+    },
+    "sentiment_details": {
+        "positive": 0,
+        "neutral": 4,
+        "negative": 2
+    },
+    "fillers": [
+        {
+            "word": "Um.",
+            "timestamp_ms": 2180
+        },
+        {
+            "word": "Mhm.",
+            "timestamp_ms": 32660
+        }
+    ],
+    "pauses": [
+        {
+            "after_word": "Hi.",
+            "duration_sec": 3.84,
+            "timestamp_ms": 4080
+        },
+        {
+            "after_word": "I'm",
+            "duration_sec": 1.12,
+            "timestamp_ms": 8720
+        },
+        {
+            "after_word": "bad.",
+            "duration_sec": 3.28,
+            "timestamp_ms": 10240
+        },
+        {
+            "after_word": "hate",
+            "duration_sec": 1.44,
+            "timestamp_ms": 14320
+        },
+        {
+            "after_word": "world.",
+            "duration_sec": 16.02,
+            "timestamp_ms": 16640
+        }
+    ],
+    "transcript": "Um. Hi. I'm bad. I hate this world. Mhm. Yeah."
+}

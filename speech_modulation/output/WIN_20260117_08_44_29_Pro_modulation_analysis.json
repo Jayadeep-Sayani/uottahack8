@@ -1,0 +1,23 @@
+{
+    "summary": {
+        "speech_rate_wpm": 5.22,
+        "total_filler_words": 0,
+        "significant_pauses": 1,
+        "primary_sentiment": "neutral",
+        "confidence_avg": 0.79
+    },
+    "sentiment_details": {
+        "positive": 0,
+        "neutral": 1,
+        "negative": 0
+    },
+    "fillers": [],
+    "pauses": [
+        {
+            "after_word": "Hi",
+            "duration_sec": 3.52,
+            "timestamp_ms": 2720
+        }
+    ],
+    "transcript": "Hi by."
+}

@@ -1,0 +1,23 @@
+{
+    "summary": {
+        "speech_rate_wpm": 62.31,
+        "total_filler_words": 0,
+        "significant_pauses": 1,
+        "primary_sentiment": "neutral",
+        "confidence_avg": 0.98
+    },
+    "sentiment_details": {
+        "positive": 0,
+        "neutral": 1,
+        "negative": 0
+    },
+    "fillers": [],
+    "pauses": [
+        {
+            "after_word": "pitch,",
+            "duration_sec": 1.2,
+            "timestamp_ms": 12320
+        }
+    ],
+    "transcript": "If you want, I can help you explain assembly AI responsibly in a pitch, deciding whether assembly AI versus Open source is better for your use case."
+}
