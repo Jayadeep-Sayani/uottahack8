@@ -1,0 +1,10 @@
+# ElevenLabs SDK for text-to-speech
+elevenlabs==1.11.0
+
+# Environment variable management
+python-dotenv==1.0.0
+
+# Optional: For audio playback (if you want to play the generated audio)
+# Uncomment the line below if you need audio playback functionality
+# Note: pygame may require additional build tools on Windows
+# pygame==2.5.2
