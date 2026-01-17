@@ -1,0 +1,11 @@
+{
+  "confidence_score": 0.104,
+  "assessment": "UNCERTAIN",
+  "interpretation": "Low vocal confidence - frequent pauses, hesitations, and disfluency indicate uncertainty in speech",
+  "recommendations": [
+    "Consider reducing frequent pausing - 96.0% of speech time is pauses. Aim for 20-40% pause time.",
+    "Try to reduce some long pauses - 8 pause(s) longer than 1 second detected. A few long pauses are fine, but many can reduce flow.",
+    "Try speaking at a slightly faster pace - current rate is 59.3 WPM. A rate of 100-220 WPM sounds more natural.",
+    "Try to improve speech fluency - 12 pauses detected makes speech somewhat choppy. Practice speaking more smoothly."
+  ]
+}
