@@ -12,10 +12,9 @@ class InterviewQuestionGenerator:
     """
     A class to generate interview questions for a given company and job description.
     
-    Generates 5 questions total:
-    - 1 Introduction question (first)
-    - 2 Regular HR questions (middle)
-    - 2 Situational questions (last)
+    Generates 2 questions total:
+    - 1 Introduction question (asks candidate to introduce themselves)
+    - 1 Regular HR question (about skills, experience, or motivation)
     """
     
     def __init__(self, api_key: str = None):
@@ -66,7 +65,7 @@ class InterviewQuestionGenerator:
         Returns:
             A formatted prompt string
         """
-        prompt = f"""Generate exactly 5 interview questions for a job interview at {company_name} for the following position:
+        prompt = f"""Generate exactly 2 interview questions for a job interview at {company_name} for the following position:
 
 Job Description:
 {job_description}
@@ -90,16 +89,7 @@ QUESTION 1 (INTRODUCTION):
 QUESTION 2 (REGULAR):
 [One regular HR question about skills, experience, or motivation, appropriate to the role level]
 
-QUESTION 3 (REGULAR):
-[Another regular HR question about skills, experience, or motivation, appropriate to the role level]
-
-QUESTION 4 (SITUATIONAL):
-[One situational question starting with "Tell me about a time when..." or "Describe a situation where...", scaled to the role level]
-
-QUESTION 5 (SITUATIONAL):
-[Another situational question starting with "Tell me about a time when..." or "Describe a situation where...", scaled to the role level]
-
-Do not add explanations, headers, or extra text outside the five questions."""
+Do not add explanations, headers, or extra text outside the two questions."""
         
         return prompt
     

@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './InterviewSetup.css';
 
 function InterviewSetup() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     companyName: '',
     jobDescription: ''
@@ -45,48 +47,18 @@ function InterviewSetup() {
       return;
     }
 
-    // Prepare data to send to backend
+    // Prepare data to store
     const interviewData = {
       companyName: formData.companyName.trim(),
       jobDescription: formData.jobDescription.trim(),
       timestamp: new Date().toISOString()
     };
 
-    console.log('Interview data to be sent to backend:', interviewData);
-
-    try {
-      const response = await fetch('/api/start-interview', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(interviewData)
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('Backend response:', result);
-        
-        // Store in localStorage as backup
-        localStorage.setItem('interviewData', JSON.stringify(interviewData));
-        
-        // Navigate to interview page or next step
-        // window.location.href = '/interview'; // Uncomment when ready
-        alert('Interview setup complete! Starting interview...');
-      } else {
-        console.error('Failed to start interview');
-        alert('Failed to start interview. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error starting interview:', error);
-      
-      // Fallback: save to localStorage if backend fails
-      localStorage.setItem('interviewData', JSON.stringify(interviewData));
-      alert('Data saved locally. Starting interview...');
-      
-      // You can still proceed to interview page
-      // window.location.href = '/interview';
-    }
+    // Store in localStorage
+    localStorage.setItem('interviewData', JSON.stringify(interviewData));
+    
+    // Navigate to interview page (questions will be generated there)
+    navigate('/interview');
   };
 
   return (

@@ -1,0 +1,29 @@
+{
+    "summary": {
+        "speech_rate_wpm": 116.25,
+        "total_filler_words": 3,
+        "significant_pauses": 0,
+        "primary_sentiment": "neutral"
+    },
+    "sentiment_details": {
+        "positive": 0,
+        "neutral": 2,
+        "negative": 0
+    },
+    "fillers": [
+        {
+            "word": "Um,",
+            "timestamp_ms": 1800
+        },
+        {
+            "word": "uh,",
+            "timestamp_ms": 7340
+        },
+        {
+            "word": "uh,",
+            "timestamp_ms": 8060
+        }
+    ],
+    "pauses": [],
+    "transcript": "Um, I'm talking while looking to my side because I think. I think I'm, uh, uh, I'm the main character of a movie, and you need to see my side profile."
+}
