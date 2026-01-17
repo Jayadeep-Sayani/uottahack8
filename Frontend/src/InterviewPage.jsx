@@ -1,5 +1,6 @@
+
 import { useState, useRef, useEffect } from 'react';
-import { Camera, Mic, MicOff, Video, VideoOff, MessageSquare, ArrowRight } from 'lucide-react';
+import { Camera, Mic, MicOff, Video, VideoOff, MessageSquare, Square, Circle } from 'lucide-react';
 
 export default function InterviewPage() {
   const [isRecording, setIsRecording] = useState(false);
@@ -7,7 +8,10 @@ export default function InterviewPage() {
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [subtitle, setSubtitle] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
   const videoRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const recordedChunksRef = useRef([]);
   const [stream, setStream] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +27,6 @@ export default function InterviewPage() {
   }, []);
 
   const generateQuestions = async () => {
-    // Check if questions already exist in localStorage
     const storedQuestions = localStorage.getItem('generatedQuestions');
     const interviewData = localStorage.getItem('interviewData');
     
@@ -40,7 +43,6 @@ export default function InterviewPage() {
       }
     }
     
-    // If no questions in localStorage, generate them
     if (interviewData) {
       try {
         const data = JSON.parse(interviewData);
@@ -60,25 +62,13 @@ export default function InterviewPage() {
         if (response.ok) {
           const result = await response.json();
           
-          // Print questions to console
-          if (result.questions && result.questions.length > 0) {
-            console.log('\n=== Generated Interview Questions ===');
-            result.questions.forEach(q => {
-              console.log(`\nQuestion ${q.number} (${q.type}):`);
-              console.log(q.text);
-            });
-            console.log('\n=====================================\n');
+          if (result.success && result.data.questionDetails) {
+            const questionsList = result.data.questionDetails.map(q => q.text);
+            setQuestions(questionsList);
+            setSubtitle(questionsList[0] || '');
+            localStorage.setItem('generatedQuestions', JSON.stringify(result.data.questionDetails));
           }
-          
-          const questionsList = result.questions.map(q => q.text);
-          setQuestions(questionsList);
-          setSubtitle(questionsList[0] || '');
-          
-          // Store in localStorage
-          localStorage.setItem('generatedQuestions', JSON.stringify(result.questions || []));
         } else {
-          console.error('Failed to generate questions');
-          // Fallback to default questions
           setQuestions([
             "Tell me about yourself and your background.",
             "What interests you most about this opportunity?"
@@ -87,7 +77,6 @@ export default function InterviewPage() {
         }
       } catch (error) {
         console.error('Error generating questions:', error);
-        // Fallback to default questions
         setQuestions([
           "Tell me about yourself and your background.",
           "What interests you most about this opportunity?"
@@ -97,7 +86,6 @@ export default function InterviewPage() {
         setLoading(false);
       }
     } else {
-      // No interview data, use default questions
       setQuestions([
         "Tell me about yourself and your background.",
         "What interests you most about this opportunity?"
@@ -122,8 +110,86 @@ export default function InterviewPage() {
     }
   };
 
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
+  const startRecording = () => {
+    if (!stream) {
+      console.error("No media stream available");
+      return;
+    }
+
+    recordedChunksRef.current = [];
+    
+    const options = { mimeType: 'video/webm;codecs=vp8,opus' };
+    mediaRecorderRef.current = new MediaRecorder(stream, options);
+    
+    mediaRecorderRef.current.ondataavailable = (event) => {
+      if (event.data && event.data.size > 0) {
+        recordedChunksRef.current.push(event.data);
+      }
+    };
+    
+    mediaRecorderRef.current.onstop = async () => {
+      const blob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+      await saveRecording(blob);
+    };
+    
+    mediaRecorderRef.current.start();
+    setIsRecording(true);
+    console.log("Recording started for question", currentQuestion + 1);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      setIsProcessing(true);
+      console.log("Recording stopped for question", currentQuestion + 1);
+    }
+  };
+
+  const saveRecording = async (blob) => {
+    try {
+      const formData = new FormData();
+      formData.append('audio', blob, `question_${currentQuestion + 1}.webm`);
+      formData.append('questionNumber', currentQuestion + 1);
+      
+      const response = await fetch('http://localhost:5000/api/save-user-recording', {
+        method: 'POST',
+        body: formData
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Recording saved:', result);
+        
+        // Wait 2 seconds before moving to next question
+        setTimeout(() => {
+          setIsProcessing(false);
+          moveToNextQuestion();
+        }, 2000);
+      } else {
+        console.error('Failed to save recording');
+        setIsProcessing(false);
+        moveToNextQuestion();
+      }
+    } catch (error) {
+      console.error('Error saving recording:', error);
+      setIsProcessing(false);
+      moveToNextQuestion();
+    }
+  };
+
+  const moveToNextQuestion = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setSubtitle('');
+      setTimeout(() => {
+        setSubtitle(questions[currentQuestion + 1]);
+      }, 300);
+    } else {
+      // Interview finished
+      alert('Interview completed! Thank you for your time.');
+      // Optionally redirect or show completion screen
+    }
   };
 
   const toggleMute = () => {
@@ -141,16 +207,6 @@ export default function InterviewPage() {
         track.enabled = !track.enabled;
       });
       setIsVideoOn(!isVideoOn);
-    }
-  };
-
-  const nextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-      setSubtitle('');
-      setTimeout(() => {
-        setSubtitle(questions[currentQuestion + 1]);
-      }, 300);
     }
   };
 
@@ -343,30 +399,16 @@ export default function InterviewPage() {
           }
         }
 
-        .next-button {
-          background: white;
-          color: #667eea;
-          border: none;
-          padding: 1rem 2rem;
+        .processing-message {
+          background: rgba(255, 255, 255, 0.2);
+          backdrop-filter: blur(10px);
+          padding: 1rem 1.5rem;
           border-radius: 0.75rem;
-          font-size: 1rem;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
           margin-top: 2rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .next-button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.15);
-        }
-
-        .next-button:active {
-          transform: translateY(0);
+          text-align: center;
+          font-weight: 500;
+          position: relative;
+          z-index: 1;
         }
 
         .right-section {
@@ -462,7 +504,7 @@ export default function InterviewPage() {
           position: relative;
         }
 
-        .control-button:hover {
+        .control-button:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.15);
         }
@@ -471,12 +513,17 @@ export default function InterviewPage() {
           transform: translateY(0);
         }
 
-        .control-button.primary {
-          background: #2563eb;
+        .control-button:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
         }
 
-        .control-button.danger {
+        .control-button.record-start {
           background: #ef4444;
+        }
+
+        .control-button.record-stop {
+          background: #1f2937;
         }
 
         .control-button.secondary {
@@ -587,7 +634,7 @@ export default function InterviewPage() {
       <div className="interview-container">
         {/* Header */}
         <div className="interview-header">
-          <div className="logo">InterviewAI</div>
+          <div className="logo">Get-into.tech</div>
           <div className="interview-info">
             <div className="question-progress">
               Question {currentQuestion + 1} of {questions.length}
@@ -611,7 +658,7 @@ export default function InterviewPage() {
                 <div className="avatar-circle">AI</div>
                 <div className="interviewer-info">
                   <h2 className="interviewer-name">AI Interviewer</h2>
-                  <p className="interviewer-role">Powered by InterviewAI</p>
+                  <p className="interviewer-role">Powered by Get-into.tech</p>
                 </div>
               </div>
 
@@ -624,11 +671,11 @@ export default function InterviewPage() {
                 <p className="question-text" key={currentQuestion}>
                   {subtitle}
                 </p>
-                {!loading && questions.length > 0 && currentQuestion < questions.length - 1 && (
-                  <button className="next-button" onClick={nextQuestion}>
-                    Next Question
-                    <ArrowRight size={18} />
-                  </button>
+                
+                {isProcessing && (
+                  <div className="processing-message">
+                    ✓ Recording saved! Moving to next question...
+                  </div>
                 )}
               </div>
             </div>
@@ -657,17 +704,29 @@ export default function InterviewPage() {
 
               {/* Controls */}
               <div className="controls-section">
-                <button 
-                  className={`control-button ${isRecording ? 'danger' : 'primary'}`}
-                  onClick={toggleRecording}
-                  title={isRecording ? 'Stop Recording' : 'Start Recording'}
-                >
-                  <Camera size={22} color="white" />
-                </button>
+                {!isRecording ? (
+                  <button 
+                    className="control-button record-start"
+                    onClick={startRecording}
+                    disabled={isProcessing || loading}
+                    title="Start Recording"
+                  >
+                    <Circle size={22} color="white" fill="white" />
+                  </button>
+                ) : (
+                  <button 
+                    className="control-button record-stop"
+                    onClick={stopRecording}
+                    title="Stop Recording"
+                  >
+                    <Square size={22} color="white" fill="white" />
+                  </button>
+                )}
 
                 <button 
                   className={`control-button ${isMuted ? 'muted' : 'secondary'}`}
                   onClick={toggleMute}
+                  disabled={isProcessing}
                   title={isMuted ? 'Unmute' : 'Mute'}
                 >
                   {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
@@ -676,6 +735,7 @@ export default function InterviewPage() {
                 <button 
                   className={`control-button ${!isVideoOn ? 'danger' : 'secondary'}`}
                   onClick={toggleVideo}
+                  disabled={isProcessing}
                   title={isVideoOn ? 'Turn Off Video' : 'Turn On Video'}
                 >
                   {isVideoOn ? <Video size={22} /> : <VideoOff size={22} color="white" />}
@@ -687,4 +747,4 @@ export default function InterviewPage() {
       </div>
     </div>
   );
-}
+} 
