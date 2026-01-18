@@ -101,6 +101,65 @@ def start_interview():
         traceback.print_exc()
         return jsonify({'error': 'Failed to generate questions. Please try again.'}), 500
 
+@app.route('/api/save-user-recording', methods=['POST'])
+def save_user_recording():
+    """
+    Endpoint to save user's audio/video recording.
+    Saves recordings to the user_recordings folder.
+    """
+    try:
+        # Check if audio file is in the request
+        if 'audio' not in request.files:
+            return jsonify({
+                'success': False,
+                'error': 'No audio file provided'
+            }), 400
+        
+        audio_file = request.files['audio']
+        question_num = request.form.get('questionNumber', '1')
+        
+        # Validate the file
+        if audio_file.filename == '':
+            return jsonify({
+                'success': False,
+                'error': 'No file selected'
+            }), 400
+        
+        # Create the user_recordings directory if it doesn't exist
+        recordings_dir = Path(__file__).parent / "user_recordings"
+        recordings_dir.mkdir(exist_ok=True)
+        
+        # Create filename with question number
+        filename = f"user_answer_{question_num}.webm"
+        save_path = recordings_dir / filename
+        
+        # Save the file
+        audio_file.save(save_path)
+        
+        print(f"✓ Recording saved: {filename}")
+        print(f"  Path: {save_path}")
+        print(f"  Size: {save_path.stat().st_size} bytes")
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'filename': filename,
+                'path': str(save_path),
+                'questionNumber': question_num,
+                'size': save_path.stat().st_size
+            },
+            'message': 'Recording saved successfully'
+        }), 200
+        
+    except Exception as e:
+        print(f"Error saving user recording: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': f'Error saving recording: {str(e)}'
+        }), 500
+
 
 @app.route('/api/text-to-speech', methods=['POST'])
 def text_to_speech():

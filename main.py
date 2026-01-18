@@ -18,12 +18,12 @@ sys.path.insert(0, str(Path(__file__).parent / "body_language_module"))
 sys.path.insert(0, str(Path(__file__).parent / "confidence_analysis_module"))
 sys.path.insert(0, str(Path(__file__).parent / "speech_modulation"))
 
-from question_generator import InterviewQuestionGenerator
-from text_to_speech import TextToSpeech
-from body_language_analyzer import analyze_body_language
-from eye_contact_analyzer import analyze_eye_contact
-from speech_analyzer import analyze_speech
-from speech_modulation_analysis import SpeechModulationAnalyzer
+from gemini_question_gen.question_generator import InterviewQuestionGenerator
+from eleven_labs_tts.text_to_speech import TextToSpeech
+from body_language_module.body_language_analyzer import analyze_body_language
+from body_language_module import analyze_eye_contact
+from confidence_analysis_module import analyze_speech
+from speech_modulation import SpeechModulationAnalyzer
 import json
 
 
