@@ -1,9 +1,10 @@
 import React from 'react';
 import './App.css'; // Import the CSS file
-import { useState, useEffect } from 'react'; 
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Route, Routes, Link } from 'react-router-dom';
+import * as Sentry from '@sentry/react';
 import InterviewSetup from './InterviewSetup.jsx'
-import InterviewPage from './InterviewPage.jsx'
+import InterviewPage from './interviewPage.jsx'
 
 
 function LoadingPage() {
@@ -94,7 +95,7 @@ function LandingPage(){
                   </div>
                 </div>
                 <div className="question-box">
-                  <p>Hello! Thank you for joining this interview. We'll start with some sort questions to get to know you better...</p>
+                  <p>Hello! Thank you for joining this interview. We'll start with some short questions to get to know you better...</p>
                 </div>
                 <div className="controls">
                   <button className="control-btn mute">Mute</button>
@@ -203,13 +204,15 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/Job-Info" element={<InterviewSetup />} />
-        <Route path="/interview" element={<InterviewPage />} />
-      </Routes>
-    </BrowserRouter>
+    <Sentry.ErrorBoundary fallback={<p>Something went wrong. Please refresh the page.</p>}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/Job-Info" element={<InterviewSetup />} />
+          <Route path="/interview" element={<InterviewPage />} />
+        </Routes>
+      </BrowserRouter>
+    </Sentry.ErrorBoundary>
   );
 }
 
