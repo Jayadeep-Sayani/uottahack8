@@ -2,6 +2,8 @@
 Flask API server for the interview preparation system.
 """
 
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
@@ -11,6 +13,15 @@ from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+
+# Initialize Sentry for error tracking
+sentry_sdk.init(
+    dsn=os.getenv("SENTRY_DSN", ""),
+    integrations=[FlaskIntegration()],
+    traces_sample_rate=1.0,
+    profiles_sample_rate=1.0,
+    environment=os.getenv("FLASK_ENV", "development"),
+)
 
 # Add modules to path
 sys.path.insert(0, str(Path(__file__).parent / "gemini_question_gen"))
@@ -241,6 +252,53 @@ def serve_audio(filename):
 def health():
     """Health check endpoint."""
     return jsonify({'status': 'ok'}), 200
+
+
+@app.route('/api/sentry-test', methods=['GET'])
+def sentry_test():
+    """
+    Test endpoint to verify Sentry is working.
+    Triggers a test error that will be captured by Sentry.
+    """
+    try:
+        # Check if Sentry DSN is configured
+        dsn = os.getenv("SENTRY_DSN", "")
+        if not dsn:
+            return jsonify({
+                'success': False,
+                'message': 'Sentry DSN not configured. Add SENTRY_DSN to your .env file.',
+                'sentry_active': False
+            }), 200
+
+        # Capture a test message
+        sentry_sdk.capture_message("Sentry test from Flask backend - get-into.tech")
+
+        # Optionally trigger a test exception (commented out to avoid actual error)
+        # raise Exception("Test exception for Sentry")
+
+        return jsonify({
+            'success': True,
+            'message': 'Sentry test message sent! Check your Sentry dashboard.',
+            'sentry_active': True,
+            'environment': os.getenv("FLASK_ENV", "development")
+        }), 200
+
+    except Exception as e:
+        sentry_sdk.capture_exception(e)
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'message': 'Error occurred but was captured by Sentry'
+        }), 500
+
+
+@app.route('/api/sentry-error-test', methods=['GET'])
+def sentry_error_test():
+    """
+    Test endpoint that intentionally raises an error to test Sentry error capturing.
+    """
+    # This will be captured by Sentry automatically
+    raise Exception("Intentional test error from get-into.tech backend!")
 
 
 if __name__ == '__main__':
