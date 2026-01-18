@@ -23,6 +23,11 @@ export default function InterviewPage() {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
+      // Cleanup audio on unmount
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
     };
   }, []);
 
@@ -207,6 +212,86 @@ export default function InterviewPage() {
         track.enabled = !track.enabled;
       });
       setIsVideoOn(!isVideoOn);
+    }
+  };
+
+  const audioRef = useRef(null);
+
+  // Function to speak text using ElevenLabs TTS via backend API
+  const speakText = async (text) => {
+    try {
+      // Stop any currently playing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+
+      // Call the backend TTS API
+      const response = await fetch('http://localhost:5000/api/text-to-speech', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: text })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success && result.audioUrl) {
+          // Create audio element and play
+          const audio = new Audio(`http://localhost:5000${result.audioUrl}`);
+          audioRef.current = audio;
+          
+          audio.play().catch(err => {
+            console.error('Error playing audio:', err);
+          });
+        } else {
+          console.warn('TTS API returned but no audio URL provided');
+        }
+      } else {
+        console.error('Failed to generate TTS audio');
+      }
+    } catch (error) {
+      console.error('Error calling TTS API:', error);
+    }
+  };
+
+  // Effect to speak question when subtitle changes
+  // DISABLED: TTS temporarily disabled to save ElevenLabs credits
+  /*
+  useEffect(() => {
+    if (subtitle && !loading) {
+      // Wait a bit for the animation, then speak
+      const timer = setTimeout(() => {
+        speakText(subtitle);
+      }, 500);
+      
+      return () => {
+        clearTimeout(timer);
+        // Stop audio when component unmounts or subtitle changes
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+      };
+    }
+  }, [subtitle, loading]);
+  */
+
+  const nextQuestion = () => {
+    // Stop any currently playing audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1);
+      setSubtitle('');
+      setTimeout(() => {
+        setSubtitle(questions[currentQuestion + 1]);
+      }, 300);
     }
   };
 
