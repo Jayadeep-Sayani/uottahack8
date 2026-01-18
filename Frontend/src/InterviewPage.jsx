@@ -1,14 +1,18 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { Camera, Mic, MicOff, Video, VideoOff, MessageSquare, Square, Circle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Camera, Mic, MicOff, Video, VideoOff, MessageSquare, Square, Circle, Loader2 } from 'lucide-react';
 
 export default function InterviewPage() {
+  const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [subtitle, setSubtitle] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const videoRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const recordedChunksRef = useRef([]);
@@ -168,12 +172,16 @@ export default function InterviewPage() {
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       setIsProcessing(true);
+      setProcessingMessage('Preparing recording...');
       console.log("Recording stopped for question", currentQuestion + 1);
     }
   };
 
   const saveRecording = async (blob) => {
     try {
+      setIsProcessing(true);
+      setProcessingMessage('Saving recording...');
+      
       const formData = new FormData();
       // Send as webm (browser format), backend will convert to mp4
       formData.append('audio', blob, `question_${currentQuestion + 1}.webm`);
@@ -187,20 +195,24 @@ export default function InterviewPage() {
       if (response.ok) {
         const result = await response.json();
         console.log('Recording saved:', result);
+        setProcessingMessage('Recording saved! Moving to next question...');
         
         // Wait 2 seconds before moving to next question
         setTimeout(() => {
           setIsProcessing(false);
+          setProcessingMessage('');
           moveToNextQuestion();
         }, 2000);
       } else {
         console.error('Failed to save recording');
         setIsProcessing(false);
+        setProcessingMessage('');
         moveToNextQuestion();
       }
     } catch (error) {
       console.error('Error saving recording:', error);
       setIsProcessing(false);
+      setProcessingMessage('');
       moveToNextQuestion();
     }
   };
@@ -214,7 +226,10 @@ export default function InterviewPage() {
       }, 300);
     } else {
       // Interview finished - analyze all recordings
+      setIsAnalyzing(true);
       setIsProcessing(true);
+      setProcessingMessage('Analyzing recordings and generating feedback...');
+      
       try {
         // Get interview metadata from localStorage
         const interviewData = localStorage.getItem('interviewData');
@@ -251,17 +266,48 @@ export default function InterviewPage() {
         if (response.ok) {
           const result = await response.json();
           console.log('Analysis complete:', result);
-          alert('Interview completed! All recordings have been analyzed.');
+          
+          // Hide loading overlay - overall feedback is already generated on backend
+          setIsAnalyzing(false);
+          setIsProcessing(false);
+          setProcessingMessage('');
+          
+          // DISABLED: TTS for final recommendation to save ElevenLabs credits
+          // Navigate directly to feedback page
+          // try {
+          //   // Fetch overall feedback
+          //   const feedbackResponse = await fetch('http://localhost:5000/api/get-overall-feedback');
+          //   if (feedbackResponse.ok) {
+          //     const overallFeedback = await feedbackResponse.json();
+          //     const finalRecommendation = overallFeedback.final_recommendation || 'Thank you for completing the interview.';
+          //     
+          //     // Speak the final recommendation
+          //     await speakText(finalRecommendation);
+          //     
+          //     // Wait a moment, then speak ending message
+          //     await new Promise(resolve => setTimeout(resolve, 500));
+          //     await speakText('This ends the interview.');
+          //   }
+          // } catch (error) {
+          //   console.error('Error fetching overall feedback or speaking:', error);
+          // }
+          
+          // Navigate to feedback page
+          navigate('/feedback');
         } else {
           const error = await response.json();
           console.error('Analysis failed:', error);
+          setIsAnalyzing(false);
+          setIsProcessing(false);
+          setProcessingMessage('');
           alert('Interview completed! However, analysis encountered an error. Please check the console.');
         }
       } catch (error) {
         console.error('Error analyzing recordings:', error);
-        alert('Interview completed! However, analysis encountered an error. Please check the console.');
-      } finally {
+        setIsAnalyzing(false);
         setIsProcessing(false);
+        setProcessingMessage('');
+        alert('Interview completed! However, analysis encountered an error. Please check the console.');
       }
     }
   };
@@ -288,42 +334,60 @@ export default function InterviewPage() {
 
   // Function to speak text using ElevenLabs TTS via backend API
   const speakText = async (text) => {
-    try {
-      // Stop any currently playing audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
-
-      // Call the backend TTS API
-      const response = await fetch('http://localhost:5000/api/text-to-speech', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text: text })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        
-        if (result.success && result.audioUrl) {
-          // Create audio element and play
-          const audio = new Audio(`http://localhost:5000${result.audioUrl}`);
-          audioRef.current = audio;
-          
-          audio.play().catch(err => {
-            console.error('Error playing audio:', err);
-          });
-        } else {
-          console.warn('TTS API returned but no audio URL provided');
+    return new Promise((resolve, reject) => {
+      try {
+        // Stop any currently playing audio
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
         }
-      } else {
-        console.error('Failed to generate TTS audio');
+
+        // Call the backend TTS API
+        fetch('http://localhost:5000/api/text-to-speech', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ text: text })
+        })
+        .then(response => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            throw new Error('Failed to generate TTS audio');
+          }
+        })
+        .then(result => {
+          if (result.success && result.audioUrl) {
+            // Create audio element and play
+            const audio = new Audio(`http://localhost:5000${result.audioUrl}`);
+            audioRef.current = audio;
+            
+            // Resolve when audio finishes playing
+            audio.onended = () => resolve();
+            audio.onerror = (err) => {
+              console.error('Error playing audio:', err);
+              reject(err);
+            };
+            
+            audio.play().catch(err => {
+              console.error('Error playing audio:', err);
+              reject(err);
+            });
+          } else {
+            console.warn('TTS API returned but no audio URL provided');
+            resolve(); // Resolve anyway to continue
+          }
+        })
+        .catch(error => {
+          console.error('Error calling TTS API:', error);
+          reject(error);
+        });
+      } catch (error) {
+        console.error('Error in speakText:', error);
+        reject(error);
       }
-    } catch (error) {
-      console.error('Error calling TTS API:', error);
-    }
+    });
   };
 
   // Effect to speak question when subtitle changes
@@ -563,6 +627,67 @@ export default function InterviewPage() {
           font-weight: 500;
           position: relative;
           z-index: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+        }
+
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+
+        .loading-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.7);
+          backdrop-filter: blur(4px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          flex-direction: column;
+          gap: 1.5rem;
+        }
+
+        .loading-overlay-content {
+          background: white;
+          border-radius: 1.5rem;
+          padding: 3rem;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          text-align: center;
+          max-width: 400px;
+        }
+
+        .loading-overlay-title {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #1a1a1a;
+          margin-bottom: 0.5rem;
+        }
+
+        .loading-overlay-message {
+          font-size: 1rem;
+          color: #64748b;
+          margin-top: 1rem;
+        }
+
+        .loading-spinner {
+          width: 48px;
+          height: 48px;
+          border: 4px solid #e5e7eb;
+          border-top-color: #2563eb;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin: 0 auto;
         }
 
         .right-section {
@@ -785,6 +910,18 @@ export default function InterviewPage() {
         }
       `}</style>
 
+      {isAnalyzing && (
+        <div className="loading-overlay">
+          <div className="loading-overlay-content">
+            <div className="loading-spinner"></div>
+            <h3 className="loading-overlay-title">Analyzing Interview</h3>
+            <p className="loading-overlay-message">
+              Processing your recordings and generating feedback. This may take a minute...
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="interview-container">
         {/* Header */}
         <div className="interview-header">
@@ -826,9 +963,10 @@ export default function InterviewPage() {
                   {subtitle}
                 </p>
                 
-                {isProcessing && (
+                {isProcessing && processingMessage && (
                   <div className="processing-message">
-                    ✓ Recording saved! Moving to next question...
+                    <Loader2 size={16} className="spinning" />
+                    <span>{processingMessage}</span>
                   </div>
                 )}
               </div>

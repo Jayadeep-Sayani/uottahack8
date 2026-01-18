@@ -623,6 +623,101 @@ def analyze_recordings():
                     placeholder_eye_contact_path.unlink()
                 except:
                     pass
+            
+            # Generate overall feedback from all individual feedback files
+            if feedback_generator:
+                try:
+                    print(f"\n" + "=" * 60)
+                    print(f"Generating Overall Feedback")
+                    print(f"=" * 60)
+                    
+                    # Load all individual feedback files
+                    all_feedback_files = sorted(list(feedback_dir.glob("user_answer_*_feedback.json")))
+                    
+                    if all_feedback_files:
+                        print(f"  → Loading {len(all_feedback_files)} feedback file(s)...")
+                        all_feedback_data = []
+                        
+                        for feedback_file in all_feedback_files:
+                            try:
+                                with open(feedback_file, 'r') as f:
+                                    feedback_data = json.load(f)
+                                    all_feedback_data.append(feedback_data)
+                            except Exception as e:
+                                print(f"  ⚠ Failed to load {feedback_file.name}: {e}")
+                        
+                        if all_feedback_data:
+                            print(f"  → Generating overall feedback from {len(all_feedback_data)} question(s)...")
+                            
+                            # Create the prompt
+                            feedback_text = ""
+                            for i, feedback in enumerate(all_feedback_data, 1):
+                                feedback_text += f"\n\n--- Question {i} Feedback ---\n"
+                                if isinstance(feedback, dict) and 'feedback' in feedback:
+                                    for bullet in feedback['feedback']:
+                                        feedback_text += f"- {bullet}\n"
+                                else:
+                                    feedback_text += str(feedback) + "\n"
+                            
+                            prompt = """
+        You are an expert interview coach. Below is the analysis from some individual interview questions. 
+        Provide a comprehensive overall feedback report in JSON format.
+        
+        The JSON should have the following structure:
+        {
+          "summary": "A brief overall summary of the candidate's performance",
+          "strengths": ["Strength 1", "Strength 2", ...],
+          "areas_for_improvement": ["Area 1", "Area 2", ...],
+          "consistency_analysis": "An evaluation of how consistent the candidate was across questions",
+          "communication_style": "Analysis of the candidate's communication style",
+          "confidence_score": "A score from 1-10",
+          "final_recommendation": "A clear recommendation written as if speaking directly to the candidate using 'you' (e.g., 'Based on your performance, I recommend...' or 'You demonstrated strong skills in...')"
+        }
+        
+        IMPORTANT: The "final_recommendation" field should be written as if the interviewer is speaking directly to the candidate, using "you" to refer to them. For example: "Based on your performance across all questions, you demonstrated strong technical knowledge and clear communication. However, you could benefit from... We recommend..."
+        
+        Ensure the response is ONLY the JSON object, with no markdown formatting or extra text.
+        
+        Individual Question Feedback:
+        """ + feedback_text
+                            
+                            # Generate overall feedback using Gemini
+                            response = feedback_generator.model.generate_content(prompt)
+                            response_text = response.text.strip()
+                            
+                            # Remove markdown code blocks if present
+                            if response_text.startswith("```json"):
+                                response_text = response_text[7:]
+                            elif response_text.startswith("```"):
+                                response_text = response_text[3:]
+                            
+                            if response_text.endswith("```"):
+                                response_text = response_text[:-3]
+                            
+                            response_text = response_text.strip()
+                            
+                            try:
+                                overall_feedback = json.loads(response_text)
+                                
+                                # Save overall feedback
+                                overall_feedback_json = feedback_dir / "overall_feedback.json"
+                                with open(overall_feedback_json, 'w') as f:
+                                    json.dump(overall_feedback, f, indent=2, ensure_ascii=False)
+                                
+                                print(f"  ✓ Overall feedback saved: {overall_feedback_json.name}")
+                                
+                            except json.JSONDecodeError as e:
+                                print(f"  ✗ Failed to parse overall feedback JSON: {e}")
+                                print(f"  Response: {response_text[:200]}...")
+                        else:
+                            print(f"  ⚠ No valid feedback data found to generate overall feedback")
+                    else:
+                        print(f"  ⚠ No individual feedback files found")
+                        
+                except Exception as e:
+                    print(f"  ✗ Overall feedback generation failed: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
         
         print(f"\n" + "=" * 60)
         print(f"Analysis Complete!")
@@ -641,6 +736,36 @@ def analyze_recordings():
         return jsonify({
             'success': False,
             'error': f'Error analyzing recordings: {str(e)}'
+        }), 500
+
+
+@app.route('/api/get-overall-feedback', methods=['GET'])
+def get_overall_feedback():
+    """
+    Get the overall feedback JSON file.
+    """
+    try:
+        feedback_dir = Path(__file__).parent / "interview_feedback"
+        overall_feedback_path = feedback_dir / "overall_feedback.json"
+        
+        if not overall_feedback_path.exists():
+            return jsonify({
+                'success': False,
+                'error': 'Overall feedback not found'
+            }), 404
+        
+        with open(overall_feedback_path, 'r') as f:
+            overall_feedback = json.load(f)
+        
+        return jsonify(overall_feedback), 200
+        
+    except Exception as e:
+        print(f"Error getting overall feedback: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': f'Error getting overall feedback: {str(e)}'
         }), 500
 
 

@@ -1,8 +1,10 @@
 {
-  "confidence_score": 0,
-  "assessment": "UNABLE_TO_ANALYZE",
-  "interpretation": "Audio could not be transcribed - speech may be unclear or file may be corrupted",
+  "confidence_score": 0.68,
+  "assessment": "MODERATELY_CONFIDENT",
+  "interpretation": "Moderate vocal confidence - generally clear speech with occasional hesitation or pauses",
   "recommendations": [
-    "Ensure audio is clear and contains speech"
+    "Consider reducing frequent pausing - 58.7% of speech time is pauses. Aim for 20-40% pause time.",
+    "Try to reduce some long pauses - 6 pause(s) longer than 1 second detected. A few long pauses are fine, but many can reduce flow.",
+    "You could improve speech fluency slightly - practice speaking more smoothly between thoughts"
   ]
 }

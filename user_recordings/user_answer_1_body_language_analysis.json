@@ -1,17 +1,17 @@
 {
   "status": "Analysis Complete",
-  "overall_score": 0.716,
+  "overall_score": 0.842,
   "assessment": "GOOD",
   "interpretation": "Good body language - demonstrates confidence and professionalism",
   "details": {
-    "posture_score": 0.353,
-    "shoulder_alignment_score": 0.91,
-    "head_position_score": 0.952,
+    "posture_score": 0.73,
+    "shoulder_alignment_score": 0.843,
+    "head_position_score": 0.987,
     "gesture_score": 0.88,
-    "detection_confidence": 0.394,
-    "frames_analyzed": 66
+    "detection_confidence": 0.421,
+    "frames_analyzed": 138
   },
   "recommendations": [
-    "Improve posture - keep your back straight and aligned with hips"
+    "Continue maintaining your excellent body language!"
   ]
 }
