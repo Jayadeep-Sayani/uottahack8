@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Mic, MicOff, Video, VideoOff, MessageSquare, Square, Circle, Loader2 } from 'lucide-react';
+import logo from './assets/logo.png';
 
 export default function InterviewPage() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function InterviewPage() {
   const [stream, setStream] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isAISpeaking, setIsAISpeaking] = useState(false);
 
   useEffect(() => {
     startWebcam();
@@ -363,15 +365,24 @@ export default function InterviewPage() {
             const audio = new Audio(`http://localhost:5000${result.audioUrl}`);
             audioRef.current = audio;
             
+            // Set speaking state when audio starts
+            audio.onplay = () => setIsAISpeaking(true);
+            
             // Resolve when audio finishes playing
-            audio.onended = () => resolve();
+            audio.onended = () => {
+              setIsAISpeaking(false);
+              resolve();
+            };
+            
             audio.onerror = (err) => {
               console.error('Error playing audio:', err);
+              setIsAISpeaking(false);
               reject(err);
             };
             
             audio.play().catch(err => {
               console.error('Error playing audio:', err);
+              setIsAISpeaking(false);
               reject(err);
             });
           } else {
@@ -418,6 +429,7 @@ export default function InterviewPage() {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
+    setIsAISpeaking(false);
     
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
@@ -429,7 +441,7 @@ export default function InterviewPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 font-sans">
+    <div className="font-sans" style={{ height: '100vh', overflow: 'hidden' }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
@@ -444,27 +456,36 @@ export default function InterviewPage() {
         }
 
         .interview-container {
-          max-width: 1600px;
-          margin: 0 auto;
-          padding: 2rem;
-          min-height: 100vh;
+          width: 100%;
+          height: 100vh;
           display: flex;
           flex-direction: column;
+          background: #f8fafc;
+          overflow: hidden;
         }
 
         .interview-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 2rem;
-          padding-bottom: 1.5rem;
+          padding: 1rem 2rem;
+          background: white;
           border-bottom: 1px solid #e2e8f0;
+          z-index: 10;
         }
 
         .logo {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
           font-size: 1.5rem;
           font-weight: 800;
           color: #2563eb;
+        }
+
+        .logo img {
+          height: 2rem;
+          width: auto;
         }
 
         .interview-info {
@@ -489,58 +510,80 @@ export default function InterviewPage() {
 
         .progress-bar-fill {
           height: 100%;
-          background: linear-gradient(90deg, #2563eb, #3b82f6);
+          background: linear-gradient(90deg, #7362f3, #8b7af5);
           border-radius: 10px;
           transition: width 0.4s ease;
         }
 
         .interview-grid {
           display: grid;
-          grid-template-columns: 1.2fr 1fr;
-          gap: 2rem;
-          flex: 1;
-          align-items: start;
+          grid-template-columns: 1fr 1fr;
+          height: calc(100vh - 80px);
+          position: relative;
+          gap: 0;
         }
 
         .left-section {
+          background: white;
           display: flex;
           flex-direction: column;
-          gap: 2rem;
+          justify-content: center;
+          align-items: center;
+          padding: 3rem;
+          position: relative;
+          overflow: hidden;
+          border-right: 2px solid #e2e8f0;
         }
 
         .interviewer-card {
-          background: white;
-          border-radius: 1.5rem;
-          padding: 2.5rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-          border: 1px solid #f1f5f9;
+          background: transparent;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          width: 100%;
+          justify-content: center;
+          align-items: center;
         }
 
-        .interviewer-header-section {
+        .ai-profile-container {
           display: flex;
+          flex-direction: column;
           align-items: center;
-          gap: 1.5rem;
-          margin-bottom: 2rem;
-          padding-bottom: 2rem;
-          border-bottom: 1px solid #f1f5f9;
+          justify-content: center;
+          height: 80%;
+          width: 100%;
+          margin: 0 auto;
+        }
+
+        .ai-profile-container.speaking {
+          border: 3px solid #10b981;
+          border-radius: 1rem;
+          box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+          animation: pulse-border 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-border {
+          0%, 100% {
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+          }
+          50% {
+            box-shadow: 0 0 30px rgba(16, 185, 129, 0.6);
+          }
         }
 
         .avatar-circle {
-          width: 80px;
-          height: 80px;
+          width: 200px;
+          height: 200px;
           border-radius: 50%;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #7362f3 0%, #8b7af5 100%);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 2rem;
+          font-size: 4rem;
           font-weight: 700;
           color: white;
-          box-shadow: 0 10px 25px -5px rgba(102, 126, 234, 0.4);
-        }
-
-        .interviewer-info {
-          flex: 1;
+          box-shadow: 0 20px 40px -10px rgba(37, 99, 235, 0.3);
+          margin-bottom: 1.5rem;
         }
 
         .interviewer-name {
@@ -548,81 +591,73 @@ export default function InterviewPage() {
           font-weight: 700;
           color: #1a1a1a;
           margin-bottom: 0.25rem;
+          text-align: center;
         }
 
         .interviewer-role {
           font-size: 0.95rem;
           color: #64748b;
           font-weight: 500;
+          text-align: center;
         }
 
         .question-card {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 1.5rem;
-          padding: 2.5rem;
-          color: white;
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 20px 40px -10px rgba(102, 126, 234, 0.3);
-        }
-
-        .question-card::before {
-          content: '';
+          background: transparent;
+          padding: 0;
+          border: none;
+          box-shadow: none;
+          color: #1a1a1a;
           position: absolute;
-          top: -50%;
-          right: -20%;
-          width: 300px;
-          height: 300px;
-          background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-          animation: floatBackground 6s ease-in-out infinite;
+          top: 2rem;
+          left: 50%;
+          width: 85%;
+          max-width: 700px;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+          align-items: center;
+          text-align: center;
+          pointer-events: none;
         }
 
-        @keyframes floatBackground {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(-20px, 20px); }
+        .question-card:hover {
+          transform: none;
+          background: transparent;
+          border: none;
+          box-shadow: none;
         }
+
 
         .question-label {
           display: inline-flex;
           align-items: center;
           gap: 0.5rem;
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          padding: 0.5rem 1rem;
-          border-radius: 50px;
-          font-size: 0.75rem;
+          color: #64748b;
+          padding: 0;
+          font-size: 0.7rem;
           font-weight: 600;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          margin-bottom: 1.5rem;
+          letter-spacing: 0.1em;
+          margin-bottom: 0.5rem;
         }
 
         .question-text {
-          font-size: 1.75rem;
-          font-weight: 600;
-          line-height: 1.4;
+          font-size: 0.875rem;
+          font-weight: 500;
+          line-height: 1.5;
           position: relative;
           z-index: 1;
-          animation: fadeInUp 0.5s ease;
-        }
-
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          color: #475569;
+          margin: 0;
         }
 
         .processing-message {
-          background: rgba(255, 255, 255, 0.2);
-          backdrop-filter: blur(10px);
-          padding: 1rem 1.5rem;
-          border-radius: 0.75rem;
-          margin-top: 2rem;
+          background: transparent;
+          padding: 0;
+          border: none;
+          border-radius: 0;
+          margin-top: 0.75rem;
           text-align: center;
           font-weight: 500;
           position: relative;
@@ -631,6 +666,7 @@ export default function InterviewPage() {
           align-items: center;
           justify-content: center;
           gap: 0.75rem;
+          color: #64748b;
         }
 
         .spinning {
@@ -684,51 +720,55 @@ export default function InterviewPage() {
           width: 48px;
           height: 48px;
           border: 4px solid #e5e7eb;
-          border-top-color: #2563eb;
+          border-top-color: #7362f3;
           border-radius: 50%;
           animation: spin 1s linear infinite;
           margin: 0 auto;
         }
 
         .right-section {
+          background: #1e293b;
           display: flex;
           flex-direction: column;
-          gap: 2rem;
-          position: sticky;
-          top: 2rem;
+          position: relative;
         }
 
         .video-card {
-          background: white;
-          border-radius: 1.5rem;
-          padding: 1.5rem;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-          border: 1px solid #f1f5f9;
+          background: transparent;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
         }
 
         .video-label-text {
+          position: absolute;
+          top: 1rem;
+          left: 1rem;
           font-size: 0.875rem;
           font-weight: 600;
-          color: #64748b;
-          margin-bottom: 1rem;
+          color: rgba(255, 255, 255, 0.9);
           text-transform: uppercase;
           letter-spacing: 0.05em;
+          z-index: 5;
+          background: rgba(0, 0, 0, 0.6);
+          padding: 0.5rem 1rem;
+          border-radius: 50px;
+          backdrop-filter: blur(10px);
         }
 
         .webcam-container {
           width: 100%;
-          aspect-ratio: 4/3;
+          height: 100%;
           background: #000;
-          border-radius: 1rem;
           overflow: hidden;
           position: relative;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
         }
 
         .webcam-video {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          transform: scaleX(-1);
         }
 
         .recording-badge {
@@ -763,15 +803,19 @@ export default function InterviewPage() {
         }
 
         .controls-section {
+          position: fixed;
+          bottom: 5rem;
+          left: 50%;
+          transform: translateX(-50%);
           display: flex;
           gap: 1rem;
           justify-content: center;
-          margin-top: 1rem;
+          z-index: 1000;
         }
 
         .control-button {
-          width: 56px;
-          height: 56px;
+          width: 80px;
+          height: 80px;
           border-radius: 50%;
           border: none;
           display: flex;
@@ -784,12 +828,12 @@ export default function InterviewPage() {
         }
 
         .control-button:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 12px -2px rgba(0, 0, 0, 0.15);
+          transform: translateY(-4px) scale(1.05);
+          box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
         }
 
         .control-button:active {
-          transform: translateY(0);
+          transform: translateY(-2px) scale(1.02);
         }
 
         .control-button:disabled {
@@ -798,11 +842,11 @@ export default function InterviewPage() {
         }
 
         .control-button.record-start {
-          background: #ef4444;
+          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         }
 
         .control-button.record-stop {
-          background: #1f2937;
+          background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
         }
 
         .control-button.secondary {
@@ -860,7 +904,7 @@ export default function InterviewPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #2563eb;
+          color: #7362f3;
           font-weight: 700;
           font-size: 0.75rem;
           margin-top: 0.125rem;
@@ -871,9 +915,12 @@ export default function InterviewPage() {
             grid-template-columns: 1fr;
           }
 
+          .left-section {
+            height: 40vh;
+          }
+
           .right-section {
-            position: relative;
-            top: 0;
+            height: 60vh;
           }
 
           .question-text {
@@ -882,11 +929,8 @@ export default function InterviewPage() {
         }
 
         @media (max-width: 768px) {
-          .interview-container {
-            padding: 1rem;
-          }
-
           .interview-header {
+            padding: 1rem;
             flex-direction: column;
             align-items: flex-start;
             gap: 1rem;
@@ -899,13 +943,33 @@ export default function InterviewPage() {
             gap: 1rem;
           }
 
+          .left-section {
+            padding: 2rem 1.5rem;
+          }
+
           .interviewer-header-section {
             flex-direction: column;
             text-align: center;
+            gap: 1rem;
           }
 
           .question-text {
             font-size: 1.25rem;
+          }
+
+          .question-card {
+            padding: 1.5rem;
+          }
+
+          .controls-section {
+            bottom: 1rem;
+            padding: 0.75rem 1rem;
+            gap: 0.75rem;
+          }
+
+          .control-button {
+            width: 48px;
+            height: 48px;
           }
         }
       `}</style>
@@ -925,7 +989,10 @@ export default function InterviewPage() {
       <div className="interview-container">
         {/* Header */}
         <div className="interview-header">
-          <div className="logo">Get-into.tech</div>
+          <div className="logo">
+            <img src={logo} alt="Logo" />
+            <span>Get-into.tech</span>
+          </div>
           <div className="interview-info">
             <div className="question-progress">
               Question {currentQuestion + 1} of {questions.length}
@@ -941,19 +1008,16 @@ export default function InterviewPage() {
 
         {/* Main Content Grid */}
         <div className="interview-grid">
-          {/* Left Section */}
+          {/* Left Section - AI Interviewer */}
           <div className="left-section">
-            {/* Interviewer Info */}
             <div className="interviewer-card">
-              <div className="interviewer-header-section">
+              <div className={`ai-profile-container ${isAISpeaking ? 'speaking' : ''}`}>
                 <div className="avatar-circle">AI</div>
-                <div className="interviewer-info">
-                  <h2 className="interviewer-name">AI Interviewer</h2>
-                  <p className="interviewer-role">Powered by Get-into.tech</p>
-                </div>
+                <h2 className="interviewer-name">AI Interviewer</h2>
+                <p className="interviewer-role">Powered by Get-into.tech</p>
               </div>
 
-              {/* Current Question */}
+              {/* Current Question - Positioned near bottom */}
               <div className="question-card">
                 <span className="question-label">
                   <MessageSquare size={14} />
@@ -973,9 +1037,8 @@ export default function InterviewPage() {
             </div>
           </div>
 
-          {/* Right Section */}
+          {/* Right Section - User Video */}
           <div className="right-section">
-            {/* Video Feed */}
             <div className="video-card">
               <div className="video-label-text">Your Video</div>
               <div className="webcam-container">
@@ -994,47 +1057,30 @@ export default function InterviewPage() {
                 )}
               </div>
 
-              {/* Controls */}
-              <div className="controls-section">
-                {!isRecording ? (
-                  <button 
-                    className="control-button record-start"
-                    onClick={startRecording}
-                    disabled={isProcessing || loading}
-                    title="Start Recording"
-                  >
-                    <Circle size={22} color="white" fill="white" />
-                  </button>
-                ) : (
-                  <button 
-                    className="control-button record-stop"
-                    onClick={stopRecording}
-                    title="Stop Recording"
-                  >
-                    <Square size={22} color="white" fill="white" />
-                  </button>
-                )}
-
-                <button 
-                  className={`control-button ${isMuted ? 'muted' : 'secondary'}`}
-                  onClick={toggleMute}
-                  disabled={isProcessing}
-                  title={isMuted ? 'Unmute' : 'Mute'}
-                >
-                  {isMuted ? <MicOff size={22} /> : <Mic size={22} />}
-                </button>
-
-                <button 
-                  className={`control-button ${!isVideoOn ? 'danger' : 'secondary'}`}
-                  onClick={toggleVideo}
-                  disabled={isProcessing}
-                  title={isVideoOn ? 'Turn Off Video' : 'Turn On Video'}
-                >
-                  {isVideoOn ? <Video size={22} /> : <VideoOff size={22} color="white" />}
-                </button>
-              </div>
             </div>
           </div>
+        </div>
+
+        {/* Controls - Centered horizontally across entire screen */}
+        <div className="controls-section">
+          {!isRecording ? (
+            <button 
+              className="control-button record-start"
+              onClick={startRecording}
+              disabled={isProcessing || loading}
+              title="Start Recording"
+            >
+              <Circle size={36} color="white" fill="white" />
+            </button>
+          ) : (
+            <button 
+              className="control-button record-stop"
+              onClick={stopRecording}
+              title="Stop Recording"
+            >
+              <Square size={36} color="white" fill="white" />
+            </button>
+          )}
         </div>
       </div>
     </div>

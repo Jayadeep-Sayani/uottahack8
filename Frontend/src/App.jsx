@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes, Link } from 'react-router-dom';
 import InterviewSetup from './InterviewSetup.jsx'
 import InterviewPage from './InterviewPage.jsx'
 import FeedbackPage from './FeedbackPage.jsx'
+import logo from './assets/logo.png';
 
 
 function LoadingPage() {
@@ -37,7 +38,10 @@ function LandingPage(){
     <div className="App">
       <nav>
         <div className="nav-container">
-          <div className="logo">Get-into.tech</div>
+          <div className="logo">
+            <img src={logo} alt="Logo" />
+            <span>Get-into.tech</span>
+          </div>
           <div className="nav-links">
             <a href="#practice">Practice</a>
             <a href="#features">Features</a>
