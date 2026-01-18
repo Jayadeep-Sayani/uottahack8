@@ -6,6 +6,8 @@ from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import os
 import sys
+import subprocess
+import shutil
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -15,9 +17,18 @@ load_dotenv()
 # Add modules to path
 sys.path.insert(0, str(Path(__file__).parent / "gemini_question_gen"))
 sys.path.insert(0, str(Path(__file__).parent / "eleven_labs_tts"))
+sys.path.insert(0, str(Path(__file__).parent / "body_language_module"))
+sys.path.insert(0, str(Path(__file__).parent / "confidence_analysis_module"))
+sys.path.insert(0, str(Path(__file__).parent / "speech_modulation"))
+sys.path.insert(0, str(Path(__file__).parent / "feedback_generator"))
 
 from question_generator import InterviewQuestionGenerator
 from text_to_speech import TextToSpeech
+from body_language_module.body_language_analyzer import analyze_body_language
+from confidence_analysis_module import analyze_speech
+from speech_modulation_analysis import SpeechModulationAnalyzer
+from feedback_generator import InterviewFeedbackGenerator
+import json
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for frontend
@@ -31,6 +42,54 @@ try:
 except Exception as e:
     print(f"Warning: Could not initialize TTS generator: {e}")
     tts_generator = None
+
+
+@app.route('/api/clear-recordings', methods=['POST'])
+def clear_recordings():
+    """
+    Clear all recordings from the user_recordings directory and feedback folder.
+    Called at the start of each new interview.
+    """
+    try:
+        recordings_dir = Path(__file__).parent / "user_recordings"
+        feedback_dir = Path(__file__).parent / "interview_feedback"
+        
+        # Create directories if they don't exist
+        recordings_dir.mkdir(exist_ok=True)
+        feedback_dir.mkdir(exist_ok=True)
+        
+        # Delete all files in the recordings directory
+        recordings_deleted = 0
+        for file_path in recordings_dir.iterdir():
+            if file_path.is_file():
+                file_path.unlink()
+                recordings_deleted += 1
+        
+        # Delete all files in the feedback directory
+        feedback_deleted = 0
+        for file_path in feedback_dir.iterdir():
+            if file_path.is_file():
+                file_path.unlink()
+                feedback_deleted += 1
+        
+        print(f"✓ Cleared {recordings_deleted} file(s) from user_recordings directory")
+        print(f"✓ Cleared {feedback_deleted} file(s) from interview_feedback directory")
+        
+        return jsonify({
+            'success': True,
+            'message': f'Cleared {recordings_deleted} recording(s) and {feedback_deleted} feedback file(s)',
+            'recordingsDeleted': recordings_deleted,
+            'feedbackDeleted': feedback_deleted
+        }), 200
+        
+    except Exception as e:
+        print(f"Error clearing recordings: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': f'Error clearing recordings: {str(e)}'
+        }), 500
 
 
 @app.route('/api/start-interview', methods=['POST'])
@@ -105,7 +164,7 @@ def start_interview():
 def save_user_recording():
     """
     Endpoint to save user's audio/video recording.
-    Saves recordings to the user_recordings folder.
+    Saves recordings to the user_recordings folder and converts webm to mp4.
     """
     try:
         # Check if audio file is in the request
@@ -129,27 +188,77 @@ def save_user_recording():
         recordings_dir = Path(__file__).parent / "user_recordings"
         recordings_dir.mkdir(exist_ok=True)
         
-        # Create filename with question number
-        filename = f"user_answer_{question_num}.webm"
-        save_path = recordings_dir / filename
+        # Save as webm first (browser format)
+        webm_filename = f"user_answer_{question_num}.webm"
+        webm_path = recordings_dir / webm_filename
+        audio_file.save(webm_path)
         
-        # Save the file
-        audio_file.save(save_path)
+        # Convert webm to mp4 using ffmpeg
+        mp4_filename = f"user_answer_{question_num}.mp4"
+        mp4_path = recordings_dir / mp4_filename
         
-        print(f"✓ Recording saved: {filename}")
-        print(f"  Path: {save_path}")
-        print(f"  Size: {save_path.stat().st_size} bytes")
-        
-        return jsonify({
-            'success': True,
-            'data': {
-                'filename': filename,
-                'path': str(save_path),
-                'questionNumber': question_num,
-                'size': save_path.stat().st_size
-            },
-            'message': 'Recording saved successfully'
-        }), 200
+        try:
+            # Use ffmpeg to convert webm to mp4
+            subprocess.run([
+                'ffmpeg',
+                '-i', str(webm_path),
+                '-c:v', 'libx264',
+                '-c:a', 'aac',
+                '-preset', 'medium',
+                '-y',  # Overwrite output file
+                str(mp4_path)
+            ], check=True, capture_output=True, text=True)
+            
+            # Delete the webm file after successful conversion
+            webm_path.unlink()
+            
+            print(f"✓ Recording converted and saved: {mp4_filename}")
+            print(f"  Path: {mp4_path}")
+            print(f"  Size: {mp4_path.stat().st_size} bytes")
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'filename': mp4_filename,
+                    'path': str(mp4_path),
+                    'questionNumber': question_num,
+                    'size': mp4_path.stat().st_size
+                },
+                'message': 'Recording saved and converted to MP4 successfully'
+            }), 200
+            
+        except subprocess.CalledProcessError as e:
+            # If ffmpeg conversion fails, keep the webm file
+            print(f"Warning: FFmpeg conversion failed: {e.stderr}")
+            print(f"Keeping webm file: {webm_filename}")
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'filename': webm_filename,
+                    'path': str(webm_path),
+                    'questionNumber': question_num,
+                    'size': webm_path.stat().st_size
+                },
+                'message': 'Recording saved as webm (mp4 conversion failed)',
+                'warning': 'FFmpeg not available or conversion failed'
+            }), 200
+            
+        except FileNotFoundError:
+            # FFmpeg not found, keep webm file
+            print(f"Warning: FFmpeg not found. Keeping webm file: {webm_filename}")
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'filename': webm_filename,
+                    'path': str(webm_path),
+                    'questionNumber': question_num,
+                    'size': webm_path.stat().st_size
+                },
+                'message': 'Recording saved as webm (FFmpeg not available)',
+                'warning': 'FFmpeg not found in system PATH'
+            }), 200
         
     except Exception as e:
         print(f"Error saving user recording: {e}")
@@ -235,6 +344,304 @@ def serve_audio(filename):
     except Exception as e:
         print(f"Error serving audio file: {e}")
         return jsonify({'error': 'Failed to serve audio file'}), 500
+
+
+def extract_audio_from_mp4(video_path: Path) -> Path:
+    """
+    Extract audio from MP4 file and save as WAV using ffmpeg.
+    
+    Args:
+        video_path: Path to MP4 video file
+    
+    Returns:
+        Path to extracted WAV audio file
+    """
+    audio_path = video_path.with_suffix(".wav")
+    
+    # Use ffmpeg command line to extract audio
+    cmd = [
+        "ffmpeg",
+        "-i", str(video_path),
+        "-vn",  # No video
+        "-acodec", "pcm_s16le",  # PCM 16-bit audio codec
+        "-ar", "44100",  # Sample rate
+        "-ac", "2",  # Stereo channels
+        "-y",  # Overwrite output file if it exists
+        str(audio_path)
+    ]
+    
+    try:
+        # Run ffmpeg, suppress output
+        subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        return audio_path
+    except subprocess.CalledProcessError as e:
+        raise Exception(f"FFmpeg extraction failed: {e.stderr}")
+    except FileNotFoundError:
+        raise Exception("FFmpeg not found in system PATH")
+
+
+@app.route('/api/analyze-recordings', methods=['POST'])
+def analyze_recordings():
+    """
+    Analyze all MP4 recordings in user_recordings directory.
+    Generates JSON files for body language, speech confidence, and speech modulation analysis.
+    Then generates feedback for each recording.
+    
+    Expects JSON body with:
+    - companyName (optional): Company name for feedback generation
+    - jobDescription (optional): Job description for feedback generation
+    - questions (optional): List of question objects with 'text' field
+    """
+    try:
+        data = request.get_json() or {}
+        company_name = data.get('companyName', '')
+        job_description = data.get('jobDescription', '')
+        questions_list = data.get('questions', [])
+        
+        recordings_dir = Path(__file__).parent / "user_recordings"
+        feedback_dir = Path(__file__).parent / "interview_feedback"
+        feedback_dir.mkdir(exist_ok=True)
+        
+        if not recordings_dir.exists():
+            return jsonify({
+                'success': False,
+                'error': 'user_recordings directory does not exist'
+            }), 404
+        
+        # Get all MP4 files
+        mp4_files = sorted(list(recordings_dir.glob("*.mp4")))
+        
+        if not mp4_files:
+            return jsonify({
+                'success': False,
+                'error': 'No MP4 files found in user_recordings directory'
+            }), 404
+        
+        print(f"=" * 60)
+        print(f"Analyzing {len(mp4_files)} recording(s)")
+        print(f"=" * 60)
+        
+        results = {}
+        
+        for video_path in mp4_files:
+            base_name = video_path.stem
+            print(f"\nAnalyzing: {video_path.name}")
+            
+            video_results = {
+                'video_file': video_path.name,
+                'body_language': None,
+                'speech_confidence': None,
+                'speech_modulation': None,
+                'errors': []
+            }
+            
+            # 1. Body Language Analysis
+            try:
+                print(f"  → Analyzing body language...")
+                body_language_results = analyze_body_language(str(video_path))
+                body_language_json = recordings_dir / f"{base_name}_body_language_analysis.json"
+                with open(body_language_json, 'w') as f:
+                    json.dump(body_language_results, f, indent=2)
+                video_results['body_language'] = str(body_language_json)
+                print(f"  ✓ Body language analysis saved: {body_language_json.name}")
+            except Exception as e:
+                error_msg = f"Body language analysis failed: {str(e)}"
+                print(f"  ✗ {error_msg}")
+                video_results['errors'].append(error_msg)
+            
+            # 2. Speech Confidence Analysis
+            try:
+                print(f"  → Analyzing speech confidence...")
+                
+                # Extract audio from MP4
+                try:
+                    audio_path = extract_audio_from_mp4(video_path)
+                    print(f"  ✓ Audio extracted: {audio_path.name}")
+                except Exception as e:
+                    raise Exception(f"Audio extraction failed: {str(e)}")
+                
+                # Analyze speech
+                try:
+                    speech_results = analyze_speech(str(audio_path))
+                    speech_json = recordings_dir / f"{base_name}_speech_confidence_analysis.json"
+                    with open(speech_json, 'w') as f:
+                        json.dump(speech_results, f, indent=2)
+                    video_results['speech_confidence'] = str(speech_json)
+                    print(f"  ✓ Speech confidence analysis saved: {speech_json.name}")
+                    
+                    # Clean up extracted audio file
+                    try:
+                        audio_path.unlink()
+                    except:
+                        pass  # Ignore cleanup errors
+                except Exception as e:
+                    raise Exception(f"Speech analysis failed: {str(e)}")
+                
+            except Exception as e:
+                error_msg = f"Speech confidence analysis failed: {str(e)}"
+                print(f"  ✗ {error_msg}")
+                video_results['errors'].append(error_msg)
+                # Clean up audio file if it exists
+                audio_path = video_path.with_suffix(".wav")
+                if audio_path.exists():
+                    try:
+                        audio_path.unlink()
+                    except:
+                        pass
+            
+            # 3. Speech Modulation Analysis
+            try:
+                print(f"  → Analyzing speech modulation...")
+                try:
+                    modulation_analyzer = SpeechModulationAnalyzer()
+                    # Temporarily set output_dir to save in same location as other analyses
+                    original_output_dir = modulation_analyzer.output_dir
+                    modulation_analyzer.output_dir = recordings_dir
+                    
+                    # Run analysis - this will save the file to self.output_dir
+                    modulation_results = modulation_analyzer.analyze(str(video_path))
+                    
+                    # The analyze method saves the file using output_dir, so get the expected path
+                    modulation_json = recordings_dir / f"{base_name}_modulation_analysis.json"
+                    
+                    # Verify file was created (in case analyze() saved to a different location)
+                    if not modulation_json.exists():
+                        # Check if it was saved to the original output_dir instead
+                        possible_path = original_output_dir / f"{base_name}_modulation_analysis.json"
+                        if possible_path.exists():
+                            # Move it to the correct location
+                            import shutil
+                            shutil.move(str(possible_path), str(modulation_json))
+                            print(f"  ✓ Moved modulation file to correct location")
+                        else:
+                            raise Exception(f"Modulation analysis file was not created at expected path")
+                    
+                    # Restore original output_dir
+                    modulation_analyzer.output_dir = original_output_dir
+                    video_results['speech_modulation'] = str(modulation_json)
+                    print(f"  ✓ Speech modulation analysis saved: {modulation_json.name}")
+                    
+                except ValueError as e:
+                    # AssemblyAI API key not found - skip this analysis
+                    error_msg = f"Speech modulation analysis skipped: {str(e)}"
+                    print(f"  ⚠ {error_msg}")
+                    video_results['errors'].append(error_msg)
+                except Exception as e:
+                    raise Exception(f"Speech modulation analysis failed: {str(e)}")
+            except Exception as e:
+                error_msg = f"Speech modulation analysis failed: {str(e)}"
+                print(f"  ✗ {error_msg}")
+                video_results['errors'].append(error_msg)
+            
+            results[base_name] = video_results
+        
+        # Generate feedback for each recording if we have all required data
+        if company_name and job_description and questions_list:
+            print(f"\n" + "=" * 60)
+            print(f"Generating Feedback")
+            print(f"=" * 60)
+            
+            # Create a placeholder eye_contact JSON file (since we're not doing eye contact analysis yet)
+            placeholder_eye_contact = {
+                "overall_score": 0.5,
+                "assessment": "NOT_ANALYZED",
+                "interpretation": "Eye contact analysis not performed in this session",
+                "recommendations": ["Eye contact analysis will be added in future updates"]
+            }
+            placeholder_eye_contact_path = recordings_dir / "placeholder_eye_contact.json"
+            with open(placeholder_eye_contact_path, 'w') as f:
+                json.dump(placeholder_eye_contact, f, indent=2)
+            
+            try:
+                feedback_generator = InterviewFeedbackGenerator()
+            except ValueError as e:
+                print(f"⚠ Feedback generation skipped: {str(e)}")
+                feedback_generator = None
+            
+            if feedback_generator:
+                for video_path in mp4_files:
+                    base_name = video_path.stem
+                    # Extract question number from base_name (e.g., "user_answer_1" -> 1)
+                    try:
+                        question_num = int(base_name.split('_')[-1])
+                        if 1 <= question_num <= len(questions_list):
+                            question_text = questions_list[question_num - 1].get('text', '')
+                        else:
+                            question_text = questions_list[0].get('text', '') if questions_list else ''
+                    except (ValueError, IndexError):
+                        question_text = questions_list[0].get('text', '') if questions_list else ''
+                    
+                    if not question_text:
+                        print(f"  ⚠ Skipping feedback for {base_name}: No question text available")
+                        continue
+                    
+                    # Get analysis file paths
+                    body_language_json = recordings_dir / f"{base_name}_body_language_analysis.json"
+                    speech_json = recordings_dir / f"{base_name}_speech_confidence_analysis.json"
+                    modulation_json = recordings_dir / f"{base_name}_modulation_analysis.json"
+                    
+                    # Check if all required analysis files exist
+                    if not body_language_json.exists() or not speech_json.exists() or not modulation_json.exists():
+                        print(f"  ⚠ Skipping feedback for {base_name}: Missing analysis files")
+                        continue
+                    
+                    try:
+                        print(f"\n  → Generating feedback for {base_name}...")
+                        feedback = feedback_generator.generate_feedback(
+                            company_name=company_name,
+                            job_description=job_description,
+                            question_text=question_text,
+                            speech_confidence_json_path=str(speech_json),
+                            body_language_json_path=str(body_language_json),
+                            eye_contact_json_path=str(placeholder_eye_contact_path),
+                            modulation_json_path=str(modulation_json)
+                        )
+                        
+                        # Save feedback
+                        feedback_json = feedback_dir / f"{base_name}_feedback.json"
+                        feedback_generator.save_feedback(feedback, str(feedback_json))
+                        
+                        results[base_name]['feedback'] = str(feedback_json)
+                        print(f"  ✓ Feedback saved: {feedback_json.name}")
+                        
+                    except Exception as e:
+                        error_msg = f"Feedback generation failed for {base_name}: {str(e)}"
+                        print(f"  ✗ {error_msg}")
+                        if 'errors' not in results[base_name]:
+                            results[base_name]['errors'] = []
+                        results[base_name]['errors'].append(error_msg)
+            
+            # Clean up placeholder file
+            if placeholder_eye_contact_path.exists():
+                try:
+                    placeholder_eye_contact_path.unlink()
+                except:
+                    pass
+        
+        print(f"\n" + "=" * 60)
+        print(f"Analysis Complete!")
+        print(f"=" * 60)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Analyzed {len(mp4_files)} recording(s)',
+            'results': results
+        }), 200
+        
+    except Exception as e:
+        print(f"Error analyzing recordings: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': f'Error analyzing recordings: {str(e)}'
+        }), 500
 
 
 @app.route('/health', methods=['GET'])

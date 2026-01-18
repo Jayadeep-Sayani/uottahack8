@@ -1,0 +1,17 @@
+{
+  "status": "Analysis Complete",
+  "overall_score": 0.645,
+  "assessment": "FAIR",
+  "interpretation": "Fair body language - room for improvement in posture and gestures",
+  "details": {
+    "posture_score": 0.281,
+    "shoulder_alignment_score": 0.725,
+    "head_position_score": 0.906,
+    "gesture_score": 0.88,
+    "detection_confidence": 0.425,
+    "frames_analyzed": 37
+  },
+  "recommendations": [
+    "Improve posture - keep your back straight and aligned with hips"
+  ]
+}

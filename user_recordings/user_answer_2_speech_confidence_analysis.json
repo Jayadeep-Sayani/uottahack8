@@ -1,0 +1,8 @@
+{
+  "confidence_score": 0,
+  "assessment": "UNABLE_TO_ANALYZE",
+  "interpretation": "Audio could not be transcribed - speech may be unclear or file may be corrupted",
+  "recommendations": [
+    "Ensure audio is clear and contains speech"
+  ]
+}

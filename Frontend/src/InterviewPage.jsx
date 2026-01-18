@@ -18,6 +18,7 @@ export default function InterviewPage() {
 
   useEffect(() => {
     startWebcam();
+    clearRecordings();
     generateQuestions();
     return () => {
       if (stream) {
@@ -30,6 +31,26 @@ export default function InterviewPage() {
       }
     };
   }, []);
+
+  const clearRecordings = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/clear-recordings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Recordings cleared:', result);
+      } else {
+        console.warn('Failed to clear recordings (this is okay)');
+      }
+    } catch (error) {
+      console.warn('Error clearing recordings (this is okay):', error);
+    }
+  };
 
   const generateQuestions = async () => {
     const storedQuestions = localStorage.getItem('generatedQuestions');
@@ -154,6 +175,7 @@ export default function InterviewPage() {
   const saveRecording = async (blob) => {
     try {
       const formData = new FormData();
+      // Send as webm (browser format), backend will convert to mp4
       formData.append('audio', blob, `question_${currentQuestion + 1}.webm`);
       formData.append('questionNumber', currentQuestion + 1);
       
@@ -183,7 +205,7 @@ export default function InterviewPage() {
     }
   };
 
-  const moveToNextQuestion = () => {
+  const moveToNextQuestion = async () => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSubtitle('');
@@ -191,9 +213,56 @@ export default function InterviewPage() {
         setSubtitle(questions[currentQuestion + 1]);
       }, 300);
     } else {
-      // Interview finished
-      alert('Interview completed! Thank you for your time.');
-      // Optionally redirect or show completion screen
+      // Interview finished - analyze all recordings
+      setIsProcessing(true);
+      try {
+        // Get interview metadata from localStorage
+        const interviewData = localStorage.getItem('interviewData');
+        const storedQuestions = localStorage.getItem('generatedQuestions');
+        
+        const requestBody = {};
+        
+        if (interviewData) {
+          try {
+            const data = JSON.parse(interviewData);
+            requestBody.companyName = data.companyName || '';
+            requestBody.jobDescription = data.jobDescription || '';
+          } catch (e) {
+            console.error('Error parsing interview data:', e);
+          }
+        }
+        
+        if (storedQuestions) {
+          try {
+            requestBody.questions = JSON.parse(storedQuestions);
+          } catch (e) {
+            console.error('Error parsing questions:', e);
+          }
+        }
+        
+        const response = await fetch('http://localhost:5000/api/analyze-recordings', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody)
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log('Analysis complete:', result);
+          alert('Interview completed! All recordings have been analyzed.');
+        } else {
+          const error = await response.json();
+          console.error('Analysis failed:', error);
+          alert('Interview completed! However, analysis encountered an error. Please check the console.');
+        }
+      } catch (error) {
+        console.error('Error analyzing recordings:', error);
+        alert('Interview completed! However, analysis encountered an error. Please check the console.');
+      } finally {
+        setIsProcessing(false);
+      }
     }
   };
 

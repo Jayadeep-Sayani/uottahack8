@@ -1,0 +1,21 @@
+{
+    "summary": {
+        "speech_rate_wpm": 102.86,
+        "total_filler_words": 1,
+        "significant_pauses": 0,
+        "primary_sentiment": "neutral"
+    },
+    "sentiment_details": {
+        "positive": 0,
+        "neutral": 1,
+        "negative": 0
+    },
+    "fillers": [
+        {
+            "word": "uh,",
+            "timestamp_ms": 2420
+        }
+    ],
+    "pauses": [],
+    "transcript": "I mean, up to you guys, uh, if you guys like it."
+}
