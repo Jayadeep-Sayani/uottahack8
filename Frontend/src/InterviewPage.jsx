@@ -23,20 +23,44 @@ export default function InterviewPage() {
   const [isAISpeaking, setIsAISpeaking] = useState(false);
 
   useEffect(() => {
-    startWebcam();
     clearRecordings();
     generateQuestions();
+    // Cleanup audio on unmount
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      // Cleanup audio on unmount
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
       }
     };
   }, []);
+
+  // Start webcam when video element is available (after questions are loaded)
+  useEffect(() => {
+    if (!loading && questions.length > 0) {
+      // Small delay to ensure video element is rendered
+      const timer = setTimeout(() => {
+        if (videoRef.current) {
+          console.log('Starting webcam, video element found');
+          startWebcam();
+        } else {
+          console.error('Video element not found when trying to start webcam');
+        }
+      }, 200);
+      
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [loading, questions.length]);
+
+  // Cleanup stream on unmount
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
 
   const clearRecordings = async () => {
     try {
@@ -143,6 +167,11 @@ export default function InterviewPage() {
 
   const startWebcam = async () => {
     try {
+      // Stop existing stream if any
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
         video: true, 
         audio: true 
