@@ -56,6 +56,8 @@ function InterviewSetup() {
 
     // Store in localStorage
     localStorage.setItem('interviewData', JSON.stringify(interviewData));
+    // Clear old cached questions so new ones are generated
+    localStorage.removeItem('generatedQuestions');
     
     // Navigate to interview page (questions will be generated there)
     navigate('/interview');

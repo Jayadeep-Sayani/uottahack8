@@ -62,22 +62,24 @@ export default function InterviewPage() {
     const storedQuestions = localStorage.getItem('generatedQuestions');
     const interviewData = localStorage.getItem('interviewData');
     
-    if (storedQuestions && interviewData) {
-      try {
-        const parsedQuestions = JSON.parse(storedQuestions);
-        const questionsList = parsedQuestions.map(q => q.text);
-        setQuestions(questionsList);
-        setSubtitle(questionsList[0] || '');
-        setLoading(false);
-        return;
-      } catch (e) {
-        console.error('Error parsing stored questions:', e);
-      }
-    }
+    // Skip cached questions for now - always regenerate to ensure freshness
+    // if (storedQuestions && interviewData) {
+    //   try {
+    //     const parsedQuestions = JSON.parse(storedQuestions);
+    //     const questionsList = parsedQuestions.map(q => q.text);
+    //     setQuestions(questionsList);
+    //     setSubtitle(questionsList[0] || '');
+    //     setLoading(false);
+    //     return;
+    //   } catch (e) {
+    //     console.error('Error parsing stored questions:', e);
+    //   }
+    // }
     
     if (interviewData) {
       try {
         const data = JSON.parse(interviewData);
+        console.log('Generating questions for:', data.companyName);
         setLoading(true);
         
         const response = await fetch('http://localhost:5000/api/start-interview', {
@@ -93,14 +95,25 @@ export default function InterviewPage() {
 
         if (response.ok) {
           const result = await response.json();
+          console.log('Questions API response:', result);
           
-          if (result.success && result.data.questionDetails) {
-            const questionsList = result.data.questionDetails.map(q => q.text);
+          if (result.success && result.questions && result.questions.length > 0) {
+            const questionsList = result.questions.map(q => q.text);
+            console.log('Generated questions:', questionsList);
             setQuestions(questionsList);
             setSubtitle(questionsList[0] || '');
-            localStorage.setItem('generatedQuestions', JSON.stringify(result.data.questionDetails));
+            localStorage.setItem('generatedQuestions', JSON.stringify(result.questions));
+          } else {
+            console.warn('No questions in response, using defaults');
+            setQuestions([
+              "Tell me about yourself and your background.",
+              "What interests you most about this opportunity?"
+            ]);
+            setSubtitle("Tell me about yourself and your background.");
           }
         } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('API error response:', response.status, errorData);
           setQuestions([
             "Tell me about yourself and your background.",
             "What interests you most about this opportunity?"
@@ -118,6 +131,7 @@ export default function InterviewPage() {
         setLoading(false);
       }
     } else {
+      console.warn('No interview data found in localStorage');
       setQuestions([
         "Tell me about yourself and your background.",
         "What interests you most about this opportunity?"
@@ -974,19 +988,35 @@ export default function InterviewPage() {
         }
       `}</style>
 
-      {isAnalyzing && (
+      {/* Loading screen while generating questions */}
+      {loading && (
         <div className="loading-overlay">
           <div className="loading-overlay-content">
             <div className="loading-spinner"></div>
-            <h3 className="loading-overlay-title">Analyzing Interview</h3>
+            <h3 className="loading-overlay-title">Preparing Your Interview</h3>
             <p className="loading-overlay-message">
-              Processing your recordings and generating feedback. This may take a minute...
+              Generating personalized interview questions based on your job description. This may take a few seconds...
             </p>
           </div>
         </div>
       )}
 
-      <div className="interview-container">
+      {/* Only show interview interface when questions are loaded */}
+      {!loading && questions.length > 0 ? (
+        <>
+          {isAnalyzing && (
+            <div className="loading-overlay">
+              <div className="loading-overlay-content">
+                <div className="loading-spinner"></div>
+                <h3 className="loading-overlay-title">Analyzing Interview</h3>
+                <p className="loading-overlay-message">
+                  Processing your recordings and generating feedback. This may take a minute...
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="interview-container">
         {/* Header */}
         <div className="interview-header">
           <div className="logo">
@@ -1082,7 +1112,18 @@ export default function InterviewPage() {
             </button>
           )}
         </div>
-      </div>
+        </div>
+        </>
+      ) : !loading && questions.length === 0 ? (
+        <div className="loading-overlay">
+          <div className="loading-overlay-content">
+            <h3 className="loading-overlay-title">Unable to Load Questions</h3>
+            <p className="loading-overlay-message">
+              There was an issue generating questions. Please go back and try again.
+            </p>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 } 
