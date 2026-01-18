@@ -1,4 +1,4 @@
-# Get-Into
+# Get-into.tech
 ### Emotionally Intelligent AI Interview Coaching
 
 ## About the Project
