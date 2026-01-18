@@ -1,6 +1,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Camera, Mic, MicOff, Video, VideoOff, MessageSquare, Square, Circle } from 'lucide-react';
+import { Link } from 'react-router-dom'; 
 
 export default function InterviewPage() {
   const [isRecording, setIsRecording] = useState(false);
@@ -449,6 +450,19 @@ export default function InterviewPage() {
           50% { transform: translate(-20px, 20px); }
         }
 
+        .finish-btn{
+          display:flex; 
+          justify-content:center; 
+          align-self: center; 
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          font-size: 1.2rem; 
+          width: 60%; 
+          padding: 15px; 
+          border-radius: 20px; 
+          font-family: 'Inter'; 
+          color: white; 
+        }
+
         .question-label {
           display: inline-flex;
           align-items: center;
@@ -764,6 +778,7 @@ export default function InterviewPage() {
                 )}
               </div>
             </div>
+            <Link to="/feedback" className="finish-btn">Finish Interview</Link>
           </div>
 
           {/* Right Section */}

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Route, Routes, Link } from 'react-router-dom';
 import InterviewSetup from './InterviewSetup.jsx'
 import InterviewPage from './InterviewPage.jsx'
+import FeedbackPage from './FeedbackPage.jsx';
 
 
 function LoadingPage() {
@@ -208,6 +209,7 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/Job-Info" element={<InterviewSetup />} />
         <Route path="/interview" element={<InterviewPage />} />
+        <Route path="/feedback" element={<FeedbackPage/>} /> 
       </Routes>
     </BrowserRouter>
   );
