@@ -1,0 +1,39 @@
+{
+    "summary": {
+        "speech_rate_wpm": 98.18,
+        "total_filler_words": 4,
+        "significant_pauses": 1,
+        "primary_sentiment": "positive"
+    },
+    "sentiment_details": {
+        "positive": 2,
+        "neutral": 1,
+        "negative": 0
+    },
+    "fillers": [
+        {
+            "word": "Um,",
+            "timestamp_ms": 1360
+        },
+        {
+            "word": "Uh,",
+            "timestamp_ms": 5140
+        },
+        {
+            "word": "um,",
+            "timestamp_ms": 11400
+        },
+        {
+            "word": "uh,",
+            "timestamp_ms": 13940
+        }
+    ],
+    "pauses": [
+        {
+            "after_word": "and",
+            "duration_sec": 1.75,
+            "timestamp_ms": 26720
+        }
+    ],
+    "transcript": "Um, I've been in multiple, many group projects. Uh, I've solved many problems. When it came comes to those group projects, um, yeah, uh, I kind of implemented and helped around the team, you know, went to stand up meetings and yeah, my approach to learning and the outcome was successful and it's great."
+}

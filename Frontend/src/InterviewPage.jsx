@@ -317,25 +317,24 @@ export default function InterviewPage() {
           setIsProcessing(false);
           setProcessingMessage('');
           
-          // DISABLED: TTS for final recommendation to save ElevenLabs credits
-          // Navigate directly to feedback page
-          // try {
-          //   // Fetch overall feedback
-          //   const feedbackResponse = await fetch('http://localhost:5000/api/get-overall-feedback');
-          //   if (feedbackResponse.ok) {
-          //     const overallFeedback = await feedbackResponse.json();
-          //     const finalRecommendation = overallFeedback.final_recommendation || 'Thank you for completing the interview.';
-          //     
-          //     // Speak the final recommendation
-          //     await speakText(finalRecommendation);
-          //     
-          //     // Wait a moment, then speak ending message
-          //     await new Promise(resolve => setTimeout(resolve, 500));
-          //     await speakText('This ends the interview.');
-          //   }
-          // } catch (error) {
-          //   console.error('Error fetching overall feedback or speaking:', error);
-          // }
+          // Fetch overall feedback and speak final recommendation
+          try {
+            // Fetch overall feedback
+            const feedbackResponse = await fetch('http://localhost:5000/api/get-overall-feedback');
+            if (feedbackResponse.ok) {
+              const overallFeedback = await feedbackResponse.json();
+              const finalRecommendation = overallFeedback.final_recommendation || 'Thank you for completing the interview.';
+              
+              // Speak the final recommendation
+              await speakText(finalRecommendation);
+              
+              // Wait a moment, then speak ending message
+              await new Promise(resolve => setTimeout(resolve, 500));
+              await speakText('This ends the interview.');
+            }
+          } catch (error) {
+            console.error('Error fetching overall feedback or speaking:', error);
+          }
           
           // Navigate to feedback page
           navigate('/feedback');
@@ -445,8 +444,6 @@ export default function InterviewPage() {
   };
 
   // Effect to speak question when subtitle changes
-  // DISABLED: TTS temporarily disabled to save ElevenLabs credits
-  /*
   useEffect(() => {
     if (subtitle && !loading) {
       // Wait a bit for the animation, then speak
@@ -464,7 +461,6 @@ export default function InterviewPage() {
       };
     }
   }, [subtitle, loading]);
-  */
 
   const nextQuestion = () => {
     // Stop any currently playing audio

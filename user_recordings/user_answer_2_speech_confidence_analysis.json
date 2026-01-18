@@ -1,0 +1,11 @@
+{
+  "confidence_score": 0.546,
+  "assessment": "SOMEWHAT_UNCERTAIN",
+  "interpretation": "Lower vocal confidence - shows hesitation through pauses, filler sounds, or uneven speech",
+  "recommendations": [
+    "Consider reducing frequent pausing - 55.3% of speech time is pauses. Aim for 20-40% pause time.",
+    "Try to reduce some long pauses - 7 pause(s) longer than 1 second detected. A few long pauses are fine, but many can reduce flow.",
+    "Consider speaking slightly faster - 86.2 WPM is a bit slow. A comfortable pace is 100-220 WPM.",
+    "Try to improve speech fluency - 23 pauses detected makes speech somewhat choppy. Practice speaking more smoothly."
+  ]
+}

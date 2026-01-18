@@ -1,0 +1,37 @@
+{
+    "summary": {
+        "speech_rate_wpm": 135.38,
+        "total_filler_words": 5,
+        "significant_pauses": 0,
+        "primary_sentiment": "neutral"
+    },
+    "sentiment_details": {
+        "positive": 1,
+        "neutral": 5,
+        "negative": 0
+    },
+    "fillers": [
+        {
+            "word": "m",
+            "timestamp_ms": 1560
+        },
+        {
+            "word": "uh,",
+            "timestamp_ms": 3600
+        },
+        {
+            "word": "uh,",
+            "timestamp_ms": 18600
+        },
+        {
+            "word": "Uh,",
+            "timestamp_ms": 26500
+        },
+        {
+            "word": "Uh,",
+            "timestamp_ms": 34200
+        }
+    ],
+    "pauses": [],
+    "transcript": "I'm m a computer science student at, uh, the University of Victoria and I've been programming for a couple years now and a technical project and coursework that I'm proud of and that deepened my understanding is an app, uh, made scholarlod. I made an application to track my GPA to help with my studies. Uh, I learned react when I made the project. Before the project, I didn't know react. After the project I knew react. Uh, I went through the whole learning process through the application."
+}

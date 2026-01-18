@@ -2,7 +2,7 @@
 Flask API server for the interview preparation system.
 """
 
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 import os
 import sys
@@ -775,5 +775,36 @@ def health():
     return jsonify({'status': 'ok'}), 200
 
 
+# Serve React frontend static files
+static_dir = Path(__file__).parent / "static"
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    """Serve the React frontend for all non-API routes."""
+    if path.startswith('api/'):
+        # Don't serve static files for API routes
+        return jsonify({'error': 'Not found'}), 404
+    
+    # Serve index.html for all routes (React Router handles client-side routing)
+    if path == '' or not (static_dir / path).exists():
+        if static_dir.exists() and (static_dir / 'index.html').exists():
+            return send_from_directory(str(static_dir), 'index.html')
+    
+    # Serve static files if they exist
+    if (static_dir / path).exists():
+        return send_from_directory(str(static_dir), path)
+    
+    # Fallback to index.html for client-side routing
+    if static_dir.exists() and (static_dir / 'index.html').exists():
+        return send_from_directory(str(static_dir), 'index.html')
+    
+    return jsonify({'error': 'Frontend not found. Please build the frontend first.'}), 404
+
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # Use environment variable for port, default to 5000
+    port = int(os.environ.get('PORT', 5000))
+    # Only run in debug mode if explicitly set
+    debug = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
+    app.run(host='0.0.0.0', debug=debug, port=port)
